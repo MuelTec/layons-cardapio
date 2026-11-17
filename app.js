@@ -363,55 +363,92 @@
      MONTE SUA PIZZA — montador para o cliente
      ------------------------------------------------------------ */
   function montarHTML() {
+    const steps = ["Tamanho", "Sabores", "Refrigerante", "Revisão"];
+    const prog = steps
+      .map(
+        (t, i) =>
+          '<button type="button" class="m-p' +
+          (i === 0 ? " is-on" : "") +
+          '" data-step="' +
+          (i + 1) +
+          '" aria-label="Etapa ' +
+          (i + 1) +
+          ": " +
+          t +
+          '"><b>' +
+          (i + 1) +
+          "</b><span>" +
+          t +
+          "</span></button>"
+      )
+      .join("");
+
+    const sizes = MENU.sizes
+      .map(
+        (s) =>
+          '<button type="button" class="m-size" data-size="' +
+          s.key +
+          '" aria-pressed="false"><b>' +
+          s.key +
+          "</b><span>" +
+          s.label +
+          "</span></button>"
+      )
+      .join("");
+
     return (
       '<section class="sec sec--montar no-print" id="montar"><div class="container">' +
       '<header class="sec-head"><div class="sec-title">' +
       '<span class="sec-eyebrow">Do seu jeito</span>' +
-      "<h2>Monte sua pizza</h2></div>" +
-      '<p class="montar-hint">Escolha o tamanho — até 2 sabores (3 no GG) —, a borda e o refrigerante; ' +
-      "o valor aparece na hora e o pedido vai pronto para o WhatsApp.</p></header>" +
+      "<h2>Monte seu pedido</h2></div>" +
+      '<p class="montar-hint">Passo a passo: escolha o tipo e o tamanho, os sabores (com ou sem borda), ' +
+      "o refrigerante e revise — o valor aparece na hora e o pedido sai pronto para o WhatsApp.</p></header>" +
       '<div class="montar-card">' +
-      '<div class="m-col">' +
-      /* 1) tamanho */
+      /* progresso das etapas */
+      '<div class="m-prog" aria-label="Etapas do pedido">' +
+      prog +
+      "</div>" +
+      '<div class="m-panels">' +
+      /* etapa 1 — tipo + tamanho */
+      '<div class="m-panel is-on" data-panel="1">' +
       '<div class="m-step"><h3><span class="m-num">1</span> Tamanho</h3>' +
+      '<div class="m-types" role="group" aria-label="Tipo de pedido">' +
+      '<button type="button" class="m-type is-on" data-type="pizza" aria-pressed="true">🍕 Pizza</button>' +
+      '<button type="button" class="m-type" data-type="calzone" aria-pressed="false">🥟 Calzone</button>' +
+      "</div>" +
       '<div class="m-sizes">' +
-      MENU.sizes
-        .map(
-          (s) =>
-            '<button type="button" class="m-size" data-size="' +
-            s.key +
-            '" aria-pressed="false"><b>' +
-            s.key +
-            "</b><span>" +
-            s.label +
-            "</span></button>"
-        )
-        .join("") +
-      "</div></div>" +
-      /* 2) sabores */
+      sizes +
+      "</div></div></div>" +
+      /* etapa 2 — sabores + borda */
+      '<div class="m-panel" data-panel="2">' +
       '<div class="m-step"><h3><span class="m-num">2</span> Sabores <small id="mMax">até 3 no GG</small></h3>' +
       '<input type="search" class="m-filter" id="mFilter" placeholder="Buscar sabor… (ex.: calabresa)" autocomplete="off" aria-label="Buscar sabor para montar">' +
       '<div class="m-flavors" id="mFlavors"></div>' +
       '<div class="m-sel" id="mSel"></div>' +
-      '<p class="m-warn is-hidden" id="mWarn">Máximo de 2 sabores neste tamanho — desmarque um para trocar.</p>' +
-      "</div>" +
-      /* 3) borda */
-      '<div class="m-step"><h3><span class="m-num">3</span> Borda recheada <small>opcional</small></h3>' +
-      '<select class="m-borda" id="mBorda" aria-label="Escolha a borda recheada"></select>' +
-      "</div>" +
-      /* 4) refrigerantes */
-      '<div class="m-step"><h3><span class="m-num">4</span> Refrigerante <small>opcional</small></h3>' +
+      '<div class="m-borda-wrap" id="mBordaWrap"><h4>Borda recheada <small>opcional</small></h4>' +
+      '<select class="m-borda" id="mBorda" aria-label="Escolha a borda recheada"></select></div>' +
+      "</div></div>" +
+      /* etapa 3 — refrigerantes */
+      '<div class="m-panel" data-panel="3">' +
+      '<div class="m-step"><h3><span class="m-num">3</span> Refrigerante <small>opcional</small></h3>' +
       '<div class="m-drinks" id="mDrinks"></div>' +
-      "</div>" +
-      "</div>" +
-      /* resumo */
-      '<aside class="m-summary"><h3>Seu pedido</h3>' +
+      "</div></div>" +
+      /* etapa 4 — revisão */
+      '<div class="m-panel m-summary" data-panel="4"><h3>Seu pedido</h3>' +
       '<div class="m-lines" id="mLines"></div>' +
       '<div class="m-total"><span>Total</span><b id="mTotal">R$ —</b></div>' +
       '<input type="text" class="m-obs" id="mObs" placeholder="Observações (opcional): sem cebola…" maxlength="140">' +
       '<a class="btn btn-primary m-send" id="mSend" href="#" target="_blank" rel="noopener">Enviar pedido no WhatsApp</a>' +
       '<p class="m-note">Na mistura de sabores vale o preço do sabor mais caro. ' +
-      "Bordas são cobradas à parte.</p></aside>" +
+      "Bordas são cobradas à parte.</p></div>" +
+      "</div>" +
+      /* avisos + navegação */
+      '<p class="m-warn is-hidden" id="mWarn"></p>' +
+      '<div class="m-foot">' +
+      '<button type="button" class="btn btn-ghost m-back is-hidden" id="mBack">← Voltar</button>' +
+      '<span class="m-mini" id="mMini">Comece escolhendo o tamanho</span>' +
+      '<button type="button" class="btn btn-primary m-next" id="mNext">Avançar →</button>' +
+      "</div>" +
       "</div></div></section>"
     );
   }
@@ -507,6 +544,15 @@
     html += cervejasHTML();
     html += galleryHTML();
     $("#sections").innerHTML = html;
+
+    /* atalho: montar um calzone direto da seção */
+    const czHead = document.querySelector("#calzones .sec-head");
+    if (czHead) {
+      czHead.insertAdjacentHTML(
+        "beforeend",
+        '<a class="btn btn-ghost m-cta" href="#montar" data-mtype="calzone">Montar um calzone</a>'
+      );
+    }
   }
 
   /* ------------------------------------------------------------
@@ -617,17 +663,27 @@
     const sec = document.getElementById("montar");
     if (!sec) return;
 
-    /* base: sabores achatados de todas as categorias de pizza */
-    const flat = [];
-    const groups = [];
-    (MENU.pizzas || []).forEach((cat) => {
-      const items = [];
-      (cat.flavors || []).forEach((f) => {
-        items.push({ idx: flat.length, f: f });
-        flat.push({ cat: cat, f: f });
+    /* base: fontes de sabores — pizza (categorias) ou calzone (grupo único) */
+    const SRC = {
+      pizza: { cats: MENU.pizzas || [] },
+      calzone: { cats: MENU.calzones ? [MENU.calzones] : [] },
+    };
+    let flat = [];
+    let groups = [];
+
+    function buildSource(key) {
+      flat = [];
+      groups = [];
+      (SRC[key].cats || []).forEach((cat) => {
+        const items = [];
+        (cat.flavors || []).forEach((f) => {
+          items.push({ idx: flat.length, f: f });
+          flat.push({ cat: cat, f: f });
+        });
+        if (items.length) groups.push({ cat: cat, items: items });
       });
-      if (items.length) groups.push({ cat: cat, items: items });
-    });
+    }
+    buildSource("pizza");
 
     /* base: refrigerantes disponíveis (grupos de refri do cardápio) */
     const drinkFlat = [];
@@ -642,7 +698,7 @@
       if (items.length) drinkGroups.push({ g: g, items: items });
     });
 
-    const state = { size: null, sel: [], borda: "", drinks: [], total: 0, ready: false };
+    const state = { type: "pizza", step: 1, size: null, sel: [], borda: "", drinks: [], total: 0, ready: false };
     let warnTimer = null;
 
     const flavorsBox = $("#mFlavors", sec);
@@ -651,28 +707,37 @@
     const selBox = $("#mSel", sec);
     const warnEl = $("#mWarn", sec);
     const bordaEl = $("#mBorda", sec);
+    const bordaWrap = $("#mBordaWrap", sec);
     const linesEl = $("#mLines", sec);
     const totalEl = $("#mTotal", sec);
     const obsEl = $("#mObs", sec);
     const sendEl = $("#mSend", sec);
     const sizeBtns = $$(".m-size", sec);
+    const typeBtns = $$(".m-type", sec);
+    const progBtns = $$(".m-p", sec);
+    const panels = $$(".m-panel", sec);
+    const backEl = $("#mBack", sec);
+    const nextEl = $("#mNext", sec);
+    const miniEl = $("#mMini", sec);
 
     const sizeLabel = (k) => {
       const s = MENU.sizes.find((x) => x.key === k);
       return s ? s.label + " (" + k + ")" : k;
     };
 
-    /* limite de sabores por tamanho: GG aceita 3, os demais 2 */
+    /* limite de sabores: calzone é 1; pizza aceita 2 (3 no GG) */
     const GG_KEY = "GG";
-    const maxFlavors = () => (state.size === GG_KEY ? 3 : 2);
+    const maxFlavors = () => (state.type === "calzone" ? 1 : state.size === GG_KEY ? 3 : 2);
 
     function updateMaxBadge() {
       const el = $("#mMax", sec);
-      if (el) el.textContent = state.size ? "até " + maxFlavors() : "até 3 no GG";
+      if (!el) return;
+      el.textContent =
+        state.type === "calzone" ? "1 sabor" : state.size ? "até " + maxFlavors() : "até 3 no GG";
     }
 
     const bordaInfo = () => {
-      if (!state.borda || !state.size) return null;
+      if (state.type !== "pizza" || !state.borda || !state.size) return null;
       const parts = state.borda.split(".");
       const g = MENU.bordas[Number(parts[0])];
       if (!g) return null;
@@ -807,7 +872,9 @@
         const it = flat[idx];
         lines.push([
           state.sel.length > 1 ? "Sabor " + (i + 1) : "Sabor",
-          it.f.name + " · " + it.cat.title.replace(/^Pizzas\s*/, ""),
+          it.f.name +
+            " · " +
+            (state.type === "calzone" ? "Calzone" : it.cat.title.replace(/^Pizzas\s*/, "")),
         ]);
       });
 
@@ -845,26 +912,75 @@
                 '<div class="m-line"><span>' + esc(l[0]) + "</span><b>" + esc(l[1]) + "</b></div>"
             )
             .join("")
-        : '<p class="m-line-ph">Comece escolhendo o tamanho e pelo menos 1 sabor.</p>';
+        : '<p class="m-line-ph">Escolha o tamanho e pelo menos 1 sabor.</p>';
 
       totalEl.textContent = state.ready ? brl(total) : "R$ —";
       sendEl.classList.toggle("is-off", !state.ready);
       sendEl.setAttribute("aria-disabled", state.ready ? "false" : "true");
       sendEl.href = state.ready ? waHref() : "#";
+
+      drawMini();
+      updateNav();
+    }
+
+    /* --- resumo enxuto no rodapé do passo a passo --- */
+    function drawMini() {
+      const bits = [state.type === "calzone" ? "Calzone" : "Pizza"];
+      if (state.size) bits.push(sizeLabel(state.size));
+      if (state.sel.length === 1) bits.push(flat[state.sel[0]].f.name);
+      else if (state.sel.length > 1) bits.push(state.sel.length + " sabores");
+      let t = bits.join(" · ");
+      if (state.ready) t += " — " + brl(state.total);
+      miniEl.textContent = t;
+    }
+
+    /* --- navegação entre etapas --- */
+    function canAdvance(step) {
+      if (step === 1) return !!state.size;
+      if (step === 2) return state.sel.length > 0;
+      return true;
+    }
+
+    function updateNav() {
+      const can = canAdvance(state.step);
+      nextEl.classList.toggle("is-off", !can);
+      nextEl.setAttribute("aria-disabled", can ? "false" : "true");
+      backEl.classList.toggle("is-hidden", state.step === 1);
+      nextEl.classList.toggle("is-hidden", state.step >= 4);
+      progBtns.forEach((b) => {
+        const n = Number(b.dataset.step);
+        b.classList.toggle("is-on", n === state.step);
+        b.classList.toggle("is-done", n < state.step);
+        b.setAttribute("aria-current", n === state.step ? "step" : "false");
+      });
+      panels.forEach((p) => p.classList.toggle("is-on", Number(p.dataset.panel) === state.step));
+    }
+
+    function showStep(n) {
+      state.step = Math.min(4, Math.max(1, n));
+      updateNav();
+      const card = sec.querySelector(".montar-card");
+      if (card) {
+        const rect = card.getBoundingClientRect();
+        if (rect.top < 60) {
+          window.scrollTo({ top: rect.top + window.scrollY - 74, behavior: "smooth" });
+        }
+      }
     }
 
     function waHref() {
+      const isCz = state.type === "calzone";
       const L = [
         "Olá! Quero fazer um pedido pela " + B.name + " 🍕",
         "",
-        "🍕 Monte sua pizza",
+        isCz ? "🥟 Monte seu calzone" : "🍕 Monte sua pizza",
         "• Tamanho: " + sizeLabel(state.size),
       ];
       state.sel.forEach((idx, i) => {
         const it = flat[idx];
         L.push(
           "• Sabor" + (state.sel.length > 1 ? " " + (i + 1) : "") + ": " + it.f.name +
-            " (" + it.cat.title.replace(/^Pizzas\s*/, "") + ")"
+            (isCz ? " (Calzone)" : " (" + it.cat.title.replace(/^Pizzas\s*/, "") + ")")
         );
       });
       const bd = bordaInfo();
@@ -921,14 +1037,41 @@
       });
     });
 
+    /* tipo de pedido: pizza ou calzone (troca a lista de sabores) */
+    typeBtns.forEach((b) => {
+      b.addEventListener("click", () => {
+        const key = b.dataset.type;
+        if (key === state.type) return;
+        state.type = key;
+        typeBtns.forEach((x) => {
+          const on = x === b;
+          x.classList.toggle("is-on", on);
+          x.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        buildSource(key);
+        state.sel = [];
+        state.borda = "";
+        filterEl.value = "";
+        if (bordaWrap) bordaWrap.hidden = key !== "pizza";
+        updateMaxBadge();
+        drawFlavors();
+        drawSel();
+        drawBorda();
+        drawSummary();
+      });
+    });
+
     flavorsBox.addEventListener("click", (e) => {
       const btn = e.target.closest(".m-f");
       if (!btn) return;
       const i = Number(btn.dataset.i);
       const at = state.sel.indexOf(i);
       if (at !== -1) state.sel.splice(at, 1);
-      else if (state.sel.length < maxFlavors()) state.sel.push(i);
-      else {
+      else if (state.sel.length < maxFlavors()) {
+        state.sel.push(i);
+        /* escolheu o sabor? limpa o buscador e mostra a lista inteira de novo */
+        if (filterEl.value) filterEl.value = "";
+      } else {
         warn();
         return;
       }
@@ -967,13 +1110,63 @@
       if (!state.ready) e.preventDefault();
     });
 
+    /* --- navegação do passo a passo --- */
+    function warnStep() {
+      warnEl.textContent =
+        state.step === 1
+          ? "Escolha um tamanho para continuar."
+          : "Escolha pelo menos 1 sabor para continuar.";
+      warnEl.classList.remove("is-hidden");
+      if (warnTimer) clearTimeout(warnTimer);
+      warnTimer = setTimeout(() => warnEl.classList.add("is-hidden"), 3200);
+    }
+
+    nextEl.addEventListener("click", () => {
+      if (!canAdvance(state.step)) {
+        warnStep();
+        return;
+      }
+      showStep(state.step + 1);
+    });
+
+    backEl.addEventListener("click", () => showStep(state.step - 1));
+
+    progBtns.forEach((b) => {
+      b.addEventListener("click", () => {
+        const target = Number(b.dataset.step);
+        if (target === state.step) return;
+        if (target < state.step) {
+          showStep(target);
+          return;
+        }
+        for (let s = state.step; s < target; s++) {
+          if (!canAdvance(s)) {
+            warnStep();
+            return;
+          }
+        }
+        showStep(target);
+      });
+    });
+
+    /* atalho "Montar um calzone" vindo da seção de calzones */
+    $$("[data-mtype]").forEach((a) => {
+      a.addEventListener("click", () => {
+        const key = a.dataset.mtype;
+        const btn = typeBtns.find((x) => x.dataset.type === key);
+        if (btn && key !== state.type) btn.click();
+      });
+    });
+
     /* --- início --- */
+    if (bordaWrap) bordaWrap.hidden = false;
     updateMaxBadge();
     drawFlavors();
     drawDrinks();
     drawSel();
     drawBorda();
     drawSummary();
+    updateNav();
   }
 
   /* ------------------------------------------------------------ */

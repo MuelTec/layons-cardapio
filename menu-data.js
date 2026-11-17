@@ -39,12 +39,12 @@ const MENU = {
     "tagline": "O combo que mais sai — perfeito para dividir ou matar a fome",
     "includes": [
       {
-        "name": "Calzone 200g",
+        "name": "Calzone",
         "note": "escolha o sabor",
         "img": "img/calzone.png"
       },
       {
-        "name": "Batata frita",
+        "name": "Batata frita 200g",
         "note": "porção crocante",
         "img": "img/batata.png"
       },

@@ -1304,10 +1304,7 @@ main {
 }
 
 .montar-card {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 26px;
-  align-items: start;
+  display: block;
   padding: 32px;
   border-radius: 26px;
   background:
@@ -1316,6 +1313,175 @@ main {
     linear-gradient(155deg, #271b15, #1d1512);
   border: 1px solid rgba(232, 64, 47, 0.35);
   box-shadow: var(--shadow);
+}
+
+/* --- montador: passo a passo --- */
+.m-prog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.m-p {
+  flex: 1 1 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.m-p b {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+  font-size: 0.72rem;
+}
+
+.m-p.is-on {
+  border-color: rgba(243, 176, 74, 0.75);
+  background: rgba(243, 176, 74, 0.14);
+  color: var(--ink);
+}
+
+.m-p.is-on b {
+  background: var(--gold);
+  color: #241a15;
+}
+
+.m-p.is-done {
+  color: var(--ink);
+  border-color: rgba(243, 176, 74, 0.35);
+}
+
+.m-p.is-done b {
+  background: rgba(243, 176, 74, 0.35);
+  color: var(--ink);
+}
+
+.m-panel {
+  display: none;
+}
+
+.m-panel.is-on {
+  display: block;
+  animation: mFade 0.25s ease;
+}
+
+@keyframes mFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.m-types {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.m-type {
+  flex: 1;
+  padding: 13px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.m-type.is-on {
+  border-color: rgba(232, 64, 47, 0.7);
+  background: rgba(232, 64, 47, 0.16);
+  color: var(--ink);
+}
+
+.m-borda-wrap {
+  margin-top: 18px;
+}
+
+.m-borda-wrap h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.m-borda-wrap h4 small {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.m-borda-wrap[hidden] {
+  display: none;
+}
+
+.m-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--line);
+}
+
+.m-mini {
+  flex: 1;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.m-back,
+.m-next {
+  padding: 12px 24px;
+  font-size: 0.9rem;
+}
+
+.m-next.is-off {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.m-next.is-off:hover {
+  transform: none;
+}
+
+.m-cta {
+  padding: 10px 20px;
+  font-size: 0.88rem;
 }
 
 .m-step + .m-step {
@@ -1549,9 +1715,9 @@ main {
 }
 
 .m-warn {
-  margin-top: 8px;
+  margin-top: 16px;
   color: #ffb3a7;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 /* --- refrigerantes (etapa 4) --- */
@@ -1641,8 +1807,6 @@ main {
 }
 
 .m-summary {
-  position: sticky;
-  top: calc(var(--topbar-h) + 14px);
   padding: 24px;
   border-radius: 20px;
   background: rgba(0, 0, 0, 0.3);
@@ -1763,6 +1927,39 @@ main {
 
   .m-flavors {
     max-height: 270px;
+  }
+
+  .m-prog {
+    gap: 6px;
+  }
+
+  .m-p {
+    flex: 1 1 44%;
+    font-size: 0.74rem;
+    padding: 9px 8px;
+  }
+
+  .m-foot {
+    flex-wrap: wrap;
+  }
+
+  .m-mini {
+    order: -1;
+    flex-basis: 100%;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+
+  .m-back,
+  .m-next {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 14px;
+  }
+
+  .m-cta {
+    width: 100%;
+    justify-content: center;
   }
 }
 
