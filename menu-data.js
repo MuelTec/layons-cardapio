@@ -710,7 +710,7 @@ const MENU = {
         {
           "name": "Guaraná Antarctica",
           "size": "1L",
-          "price": 11
+          "price": 12
         },
         {
           "name": "Coca-Cola",
