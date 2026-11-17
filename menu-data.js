@@ -34,9 +34,9 @@ const MENU = {
     title: "Combo da Casa",
     tagline: "O combo que mais sai — perfeito para dividir ou matar a fome",
     includes: [
-      { name: "Calzone 200g", note: "escolha o sabor" },
-      { name: "Batata frita", note: "porção crocante" },
-      { name: "Refrigerante 350ml", note: "lata gelada" },
+      { name: "Calzone 200g", note: "escolha o sabor", img: "img/calzone.png" },
+      { name: "Batata frita", note: "porção crocante", img: "img/batata.png" },
+      { name: "Refrigerante 350ml", note: "lata gelada", img: "img/refri-lata.png" },
     ],
     prices: { P: 35, M: 39, G: 47, GG: 54 },
   },
@@ -51,6 +51,20 @@ const MENU = {
     { flavor: "34", name: "Carne de Sol com Requeijão", category: "especiais" },
     { flavor: "40", name: "Strogonoff de Frango", category: "especiais" },
     { flavor: "53", name: "Lampião", category: "premium" },
+  ],
+
+  /* ------------------------------------------------------------
+     GALERIA — fotos extraídas do cardápio original
+     ------------------------------------------------------------ */
+  gallery: [
+    { src: "img/calzone-fatiado.jpg", alt: "Calzone fatiado, recheio generoso" },
+    { src: "img/pizza-1.jpg", alt: "Pizza artesanal com muçarela, tomate e bacon" },
+    { src: "img/pizza-3.jpg", alt: "Pizza assada na hora com calabresa e tomate" },
+    { src: "img/pizza-doce.jpg", alt: "Pizza doce com chocolate e frutas" },
+    { src: "img/pizza-2.jpg", alt: "Pizza com molho branco e tomate" },
+    { src: "img/pizza-4.jpg", alt: "Pizza com frango, tomate e azeitona" },
+    { src: "img/pizza-5.jpg", alt: "Pizza com molho branco e ervas finas" },
+    { src: "img/pizza-6.jpg", alt: "Pizza artesanal saindo do forno" },
   ],
 };
 

@@ -179,11 +179,19 @@
       c.includes
         .map(
           (i) =>
-            "<li>" +
+            "<li" +
+            (i.img ? ' class="has-thumb"' : "") +
+            ">" +
+            (i.img
+              ? '<img class="combo-thumb" src="' +
+                esc(i.img) +
+                '" alt="" aria-hidden="true" loading="lazy">'
+              : "") +
+            "<span class=\"combo-name\">" +
             esc(i.name) +
             " <span>· " +
             esc(i.note) +
-            "</span></li>"
+            "</span></span></li>"
         )
         .join("") +
       "</ul></div>" +
@@ -324,6 +332,34 @@
   }
 
   /* ------------------------------------------------------------
+     Galeria de fotos
+     ------------------------------------------------------------ */
+  function galleryHTML() {
+    const shots = MENU.gallery || [];
+    if (!shots.length) return "";
+    return (
+      '<section class="sec sec--gallery" id="galeria" data-break="page"><div class="container">' +
+      '<header class="sec-head"><div class="sec-title">' +
+      '<span class="sec-eyebrow">Direto do nosso forno</span>' +
+      "<h2>A casa em fotos</h2></div></header>" +
+      '<div class="gallery">' +
+      shots
+        .map(
+          (g, i) =>
+            '<figure class="g-item g-item--' +
+            (i % 8) +
+            '"><img src="' +
+            esc(g.src) +
+            '" alt="' +
+            esc(g.alt) +
+            '" loading="lazy"></figure>'
+        )
+        .join("") +
+      "</div></div></section>"
+    );
+  }
+
+  /* ------------------------------------------------------------
      Montagem das seções + chips
      ------------------------------------------------------------ */
   const CHIPS = [
@@ -338,6 +374,7 @@
     { id: "bordas", label: "Bordas" },
     { id: "bebidas", label: "Bebidas" },
     { id: "cervejas", label: "Cervejas" },
+    { id: "galeria", label: "Fotos" },
   ];
 
   const PAGE_BREAKS = {
@@ -409,6 +446,7 @@
     html += bordasHTML();
     html += bebidasHTML();
     html += cervejasHTML();
+    html += galleryHTML();
     $("#sections").innerHTML = html;
   }
 
