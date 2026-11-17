@@ -368,7 +368,7 @@
       '<header class="sec-head"><div class="sec-title">' +
       '<span class="sec-eyebrow">Do seu jeito</span>' +
       "<h2>Monte sua pizza</h2></div>" +
-      '<p class="montar-hint">Escolha o tamanho, até 2 sabores e a borda — ' +
+      '<p class="montar-hint">Escolha o tamanho — até 2 sabores (3 no GG) — e a borda; ' +
       "o valor aparece na hora e o pedido vai pronto para o WhatsApp.</p></header>" +
       '<div class="montar-card">' +
       '<div class="m-col">' +
@@ -389,11 +389,11 @@
         .join("") +
       "</div></div>" +
       /* 2) sabores */
-      '<div class="m-step"><h3><span class="m-num">2</span> Sabores <small>até 2</small></h3>' +
+      '<div class="m-step"><h3><span class="m-num">2</span> Sabores <small id="mMax">até 3 no GG</small></h3>' +
       '<input type="search" class="m-filter" id="mFilter" placeholder="Buscar sabor… (ex.: calabresa)" autocomplete="off" aria-label="Buscar sabor para montar">' +
       '<div class="m-flavors" id="mFlavors"></div>' +
       '<div class="m-sel" id="mSel"></div>' +
-      '<p class="m-warn is-hidden" id="mWarn">Máximo de 2 sabores — desmarque um para trocar.</p>' +
+      '<p class="m-warn is-hidden" id="mWarn">Máximo de 2 sabores neste tamanho — desmarque um para trocar.</p>' +
       "</div>" +
       /* 3) borda */
       '<div class="m-step"><h3><span class="m-num">3</span> Borda recheada <small>opcional</small></h3>' +
@@ -406,7 +406,7 @@
       '<div class="m-total"><span>Total</span><b id="mTotal">R$ —</b></div>' +
       '<input type="text" class="m-obs" id="mObs" placeholder="Observações (opcional): sem cebola…" maxlength="140">' +
       '<a class="btn btn-primary m-send" id="mSend" href="#" target="_blank" rel="noopener">Enviar pedido no WhatsApp</a>' +
-      '<p class="m-note">Na mistura de 2 sabores vale o preço do sabor mais caro. ' +
+      '<p class="m-note">Na mistura de sabores vale o preço do sabor mais caro. ' +
       "Bordas são cobradas à parte.</p></aside>" +
       "</div></div></section>"
     );
@@ -644,6 +644,15 @@
       return s ? s.label + " (" + k + ")" : k;
     };
 
+    /* limite de sabores por tamanho: GG aceita 3, os demais 2 */
+    const GG_KEY = "GG";
+    const maxFlavors = () => (state.size === GG_KEY ? 3 : 2);
+
+    function updateMaxBadge() {
+      const el = $("#mMax", sec);
+      if (el) el.textContent = state.size ? "até " + maxFlavors() : "até 3 no GG";
+    }
+
     const bordaInfo = () => {
       if (!state.borda || !state.size) return null;
       const parts = state.borda.split(".");
@@ -768,7 +777,7 @@
         total += bd.price;
       }
 
-      if (state.sel.length === 2) lines.push(["Regra da mistura", "Vale o sabor mais caro"]);
+      if (state.sel.length > 1) lines.push(["Regra da mistura", "Vale o sabor mais caro"]);
 
       state.total = total;
       state.ready = !!state.size && state.sel.length > 0;
@@ -819,6 +828,8 @@
     }
 
     function warn() {
+      warnEl.textContent =
+        "Máximo de " + maxFlavors() + " sabores neste tamanho — desmarque um para trocar.";
       warnEl.classList.remove("is-hidden");
       if (warnTimer) clearTimeout(warnTimer);
       warnTimer = setTimeout(() => warnEl.classList.add("is-hidden"), 3200);
@@ -833,7 +844,16 @@
           x.classList.toggle("is-on", on);
           x.setAttribute("aria-pressed", on ? "true" : "false");
         });
+        /* trocou para tamanho com limite menor? corta o excedente */
+        const max = maxFlavors();
+        const trimmed = state.sel.length > max;
+        if (trimmed) state.sel = state.sel.slice(0, max);
+        updateMaxBadge();
         drawBorda();
+        if (trimmed) {
+          drawFlavors();
+          drawSel();
+        }
         drawSummary();
       });
     });
@@ -844,7 +864,7 @@
       const i = Number(btn.dataset.i);
       const at = state.sel.indexOf(i);
       if (at !== -1) state.sel.splice(at, 1);
-      else if (state.sel.length < 2) state.sel.push(i);
+      else if (state.sel.length < maxFlavors()) state.sel.push(i);
       else {
         warn();
         return;
@@ -875,6 +895,7 @@
     });
 
     /* --- início --- */
+    updateMaxBadge();
     drawFlavors();
     drawSel();
     drawBorda();
