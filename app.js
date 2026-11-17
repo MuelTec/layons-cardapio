@@ -368,7 +368,7 @@
       '<header class="sec-head"><div class="sec-title">' +
       '<span class="sec-eyebrow">Do seu jeito</span>' +
       "<h2>Monte sua pizza</h2></div>" +
-      '<p class="montar-hint">Escolha o tamanho — até 2 sabores (3 no GG) — e a borda; ' +
+      '<p class="montar-hint">Escolha o tamanho — até 2 sabores (3 no GG) —, a borda e o refrigerante; ' +
       "o valor aparece na hora e o pedido vai pronto para o WhatsApp.</p></header>" +
       '<div class="montar-card">' +
       '<div class="m-col">' +
@@ -398,6 +398,10 @@
       /* 3) borda */
       '<div class="m-step"><h3><span class="m-num">3</span> Borda recheada <small>opcional</small></h3>' +
       '<select class="m-borda" id="mBorda" aria-label="Escolha a borda recheada"></select>' +
+      "</div>" +
+      /* 4) refrigerantes */
+      '<div class="m-step"><h3><span class="m-num">4</span> Refrigerante <small>opcional</small></h3>' +
+      '<div class="m-drinks" id="mDrinks"></div>' +
       "</div>" +
       "</div>" +
       /* resumo */
@@ -625,10 +629,24 @@
       if (items.length) groups.push({ cat: cat, items: items });
     });
 
-    const state = { size: null, sel: [], borda: "", total: 0, ready: false };
+    /* base: refrigerantes disponíveis (grupos de refri do cardápio) */
+    const drinkFlat = [];
+    const drinkGroups = [];
+    (MENU.drinks || []).forEach((g) => {
+      if (!/refri/i.test((g.id || "") + " " + (g.title || ""))) return;
+      const items = [];
+      (g.rows || []).forEach((r) => {
+        items.push({ idx: drinkFlat.length, r: r });
+        drinkFlat.push({ r: r });
+      });
+      if (items.length) drinkGroups.push({ g: g, items: items });
+    });
+
+    const state = { size: null, sel: [], borda: "", drinks: [], total: 0, ready: false };
     let warnTimer = null;
 
     const flavorsBox = $("#mFlavors", sec);
+    const drinksBox = $("#mDrinks", sec);
     const filterEl = $("#mFilter", sec);
     const selBox = $("#mSel", sec);
     const warnEl = $("#mWarn", sec);
@@ -722,6 +740,35 @@
       if (!state.sel.length) selBox.innerHTML = '<span class="m-sel-ph">Nenhum sabor escolhido ainda</span>';
     }
 
+    /* --- refrigerantes (chips, múltipla escolha) --- */
+    function drawDrinks() {
+      if (!drinkGroups.length) {
+        drinksBox.innerHTML = '<p class="m-empty">Nenhum refrigerante disponível.</p>';
+        return;
+      }
+      let html = "";
+      drinkGroups.forEach((gr) => {
+        html += '<div class="m-dgroup"><h4>' + esc(gr.g.title) + "</h4>";
+        gr.items.forEach((it) => {
+          const on = state.drinks.indexOf(it.idx) !== -1;
+          html +=
+            '<button type="button" class="m-d' +
+            (on ? " is-sel" : "") +
+            '" data-d="' +
+            it.idx +
+            '" aria-pressed="' +
+            (on ? "true" : "false") +
+            '"><span>' +
+            esc(it.r.name + (it.r.size ? " " + it.r.size : "")) +
+            "</span><b>" +
+            brl(it.r.price) +
+            '</b><span class="m-d-check">✓</span></button>';
+        });
+        html += "</div>";
+      });
+      drinksBox.innerHTML = html;
+    }
+
     /* --- opções de borda (preço por tamanho) --- */
     function drawBorda() {
       const prev = state.borda;
@@ -777,6 +824,15 @@
         total += bd.price;
       }
 
+      state.drinks.forEach((idx) => {
+        const it = drinkFlat[idx];
+        lines.push([
+          "Refrigerante",
+          it.r.name + (it.r.size ? " " + it.r.size : "") + " — " + brl(it.r.price),
+        ]);
+        total += Number(it.r.price || 0);
+      });
+
       if (state.sel.length > 1) lines.push(["Regra da mistura", "Vale o sabor mais caro"]);
 
       state.total = total;
@@ -813,6 +869,13 @@
       });
       const bd = bordaInfo();
       if (bd) L.push("• Borda: " + bd.name + " (+" + brl(bd.price) + ")");
+      state.drinks.forEach((idx) => {
+        const it = drinkFlat[idx];
+        L.push(
+          "• Refrigerante: " + it.r.name + (it.r.size ? " " + it.r.size : "") +
+            " — " + brl(it.r.price)
+        );
+      });
       L.push("💰 Total: " + brl(state.total));
       const obs = (obsEl.value || "").trim();
       if (obs) L.push("📝 " + obs);
@@ -885,6 +948,16 @@
     });
 
     filterEl.addEventListener("input", drawFlavors);
+    drinksBox.addEventListener("click", (e) => {
+      const btn = e.target.closest(".m-d");
+      if (!btn) return;
+      const i = Number(btn.dataset.d);
+      const at = state.drinks.indexOf(i);
+      if (at !== -1) state.drinks.splice(at, 1);
+      else state.drinks.push(i);
+      drawDrinks();
+      drawSummary();
+    });
     bordaEl.addEventListener("change", () => {
       state.borda = bordaEl.value;
       drawSummary();
@@ -897,6 +970,7 @@
     /* --- início --- */
     updateMaxBadge();
     drawFlavors();
+    drawDrinks();
     drawSel();
     drawBorda();
     drawSummary();

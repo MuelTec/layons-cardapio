@@ -1559,6 +1559,76 @@ main {
   font-size: 0.8rem;
 }
 
+/* --- refrigerantes (etapa 4) --- */
+.m-drinks {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid var(--line);
+}
+
+.m-dgroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.m-dgroup h4 {
+  flex: 1 0 100%;
+  margin: 0 0 2px;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.m-d {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: 0.15s ease;
+}
+
+.m-d:hover {
+  border-color: rgba(243, 176, 74, 0.55);
+}
+
+.m-d b {
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.m-d-check {
+  color: var(--green);
+  font-weight: 800;
+  display: none;
+}
+
+.m-d.is-sel {
+  background: rgba(243, 176, 74, 0.16);
+  border-color: rgba(243, 176, 74, 0.55);
+}
+
+.m-d.is-sel .m-d-check {
+  display: inline;
+}
+
 .m-borda {
   width: 100%;
   padding: 11px 14px;
