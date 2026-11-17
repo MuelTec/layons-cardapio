@@ -360,10 +360,64 @@
   }
 
   /* ------------------------------------------------------------
+     MONTE SUA PIZZA — montador para o cliente
+     ------------------------------------------------------------ */
+  function montarHTML() {
+    return (
+      '<section class="sec sec--montar no-print" id="montar"><div class="container">' +
+      '<header class="sec-head"><div class="sec-title">' +
+      '<span class="sec-eyebrow">Do seu jeito</span>' +
+      "<h2>Monte sua pizza</h2></div>" +
+      '<p class="montar-hint">Escolha o tamanho, até 2 sabores e a borda — ' +
+      "o valor aparece na hora e o pedido vai pronto para o WhatsApp.</p></header>" +
+      '<div class="montar-card">' +
+      '<div class="m-col">' +
+      /* 1) tamanho */
+      '<div class="m-step"><h3><span class="m-num">1</span> Tamanho</h3>' +
+      '<div class="m-sizes">' +
+      MENU.sizes
+        .map(
+          (s) =>
+            '<button type="button" class="m-size" data-size="' +
+            s.key +
+            '" aria-pressed="false"><b>' +
+            s.key +
+            "</b><span>" +
+            s.label +
+            "</span></button>"
+        )
+        .join("") +
+      "</div></div>" +
+      /* 2) sabores */
+      '<div class="m-step"><h3><span class="m-num">2</span> Sabores <small>até 2</small></h3>' +
+      '<input type="search" class="m-filter" id="mFilter" placeholder="Buscar sabor… (ex.: calabresa)" autocomplete="off" aria-label="Buscar sabor para montar">' +
+      '<div class="m-flavors" id="mFlavors"></div>' +
+      '<div class="m-sel" id="mSel"></div>' +
+      '<p class="m-warn is-hidden" id="mWarn">Máximo de 2 sabores — desmarque um para trocar.</p>' +
+      "</div>" +
+      /* 3) borda */
+      '<div class="m-step"><h3><span class="m-num">3</span> Borda recheada <small>opcional</small></h3>' +
+      '<select class="m-borda" id="mBorda" aria-label="Escolha a borda recheada"></select>' +
+      "</div>" +
+      "</div>" +
+      /* resumo */
+      '<aside class="m-summary"><h3>Seu pedido</h3>' +
+      '<div class="m-lines" id="mLines"></div>' +
+      '<div class="m-total"><span>Total</span><b id="mTotal">R$ —</b></div>' +
+      '<input type="text" class="m-obs" id="mObs" placeholder="Observações (opcional): sem cebola…" maxlength="140">' +
+      '<a class="btn btn-primary m-send" id="mSend" href="#" target="_blank" rel="noopener">Enviar pedido no WhatsApp</a>' +
+      '<p class="m-note">Na mistura de 2 sabores vale o preço do sabor mais caro. ' +
+      "Bordas são cobradas à parte.</p></aside>" +
+      "</div></div></section>"
+    );
+  }
+
+  /* ------------------------------------------------------------
      Montagem das seções + chips
      ------------------------------------------------------------ */
   const CHIPS = [
     { id: "combos", label: "Combos" },
+    { id: "montar", label: "Montar" },
     { id: "calzones", label: "Calzones" },
     { id: "simples", label: "Simples" },
     { id: "tradicionais", label: "Tradicionais" },
@@ -439,6 +493,7 @@
 
     /* seções */
     let html = comboHTML();
+    html += montarHTML();
     html += menuSection(MENU.calzones, {});
     MENU.pizzas.forEach((cat) => {
       html += menuSection(cat, { pageBreak: !!PAGE_BREAKS[cat.id] });
@@ -551,8 +606,284 @@
     });
   }
 
+  /* ------------------------------------------------------------
+     Montador — lógica
+     ------------------------------------------------------------ */
+  function setupBuilder() {
+    const sec = document.getElementById("montar");
+    if (!sec) return;
+
+    /* base: sabores achatados de todas as categorias de pizza */
+    const flat = [];
+    const groups = [];
+    (MENU.pizzas || []).forEach((cat) => {
+      const items = [];
+      (cat.flavors || []).forEach((f) => {
+        items.push({ idx: flat.length, f: f });
+        flat.push({ cat: cat, f: f });
+      });
+      if (items.length) groups.push({ cat: cat, items: items });
+    });
+
+    const state = { size: null, sel: [], borda: "", total: 0, ready: false };
+    let warnTimer = null;
+
+    const flavorsBox = $("#mFlavors", sec);
+    const filterEl = $("#mFilter", sec);
+    const selBox = $("#mSel", sec);
+    const warnEl = $("#mWarn", sec);
+    const bordaEl = $("#mBorda", sec);
+    const linesEl = $("#mLines", sec);
+    const totalEl = $("#mTotal", sec);
+    const obsEl = $("#mObs", sec);
+    const sendEl = $("#mSend", sec);
+    const sizeBtns = $$(".m-size", sec);
+
+    const sizeLabel = (k) => {
+      const s = MENU.sizes.find((x) => x.key === k);
+      return s ? s.label + " (" + k + ")" : k;
+    };
+
+    const bordaInfo = () => {
+      if (!state.borda || !state.size) return null;
+      const parts = state.borda.split(".");
+      const g = MENU.bordas[Number(parts[0])];
+      if (!g) return null;
+      const name = g.flavors[Number(parts[1])];
+      if (name == null) return null;
+      return { name: name, price: Number(g.prices[state.size] || 0) };
+    };
+
+    /* --- lista de sabores (com filtro) --- */
+    function drawFlavors() {
+      const q = normalize((filterEl.value || "").trim());
+      let html = "";
+      let count = 0;
+
+      groups.forEach((gr) => {
+        const rows = gr.items.filter(
+          (it) => !q || normalize((it.f.n ? it.f.n + " " : "") + it.f.name + " " + it.f.desc).indexOf(q) !== -1
+        );
+        if (!rows.length) return;
+        count += rows.length;
+        html +=
+          '<div class="m-group"><h4>' +
+          esc(gr.cat.title) +
+          '<small>' +
+          rows.length +
+          "</small></h4>";
+        rows.forEach((it) => {
+          const on = state.sel.indexOf(it.idx) !== -1;
+          html +=
+            '<button type="button" class="m-f' +
+            (on ? " is-sel" : "") +
+            '" data-i="' +
+            it.idx +
+            '" aria-pressed="' +
+            (on ? "true" : "false") +
+            '">' +
+            (it.f.n ? '<span class="m-f-n">' + esc(it.f.n) + "</span>" : "") +
+            '<span class="m-f-name">' +
+            esc(it.f.name) +
+            "</span>" +
+            '<span class="m-f-check">✓</span></button>';
+        });
+        html += "</div>";
+      });
+
+      if (!count) html = '<p class="m-empty">Nenhum sabor encontrado para “' + esc(filterEl.value.trim()) + '”.</p>';
+      flavorsBox.innerHTML = html;
+    }
+
+    /* --- sabores escolhidos (chips) --- */
+    function drawSel() {
+      selBox.innerHTML = state.sel
+        .map((idx) => {
+          const it = flat[idx];
+          return (
+            '<button type="button" class="m-chip" data-i="' +
+            idx +
+            '" title="Remover">' +
+            esc(it.f.name) +
+            "<span>×</span></button>"
+          );
+        })
+        .join("");
+      selBox.classList.toggle("is-empty", !state.sel.length);
+      if (!state.sel.length) selBox.innerHTML = '<span class="m-sel-ph">Nenhum sabor escolhido ainda</span>';
+    }
+
+    /* --- opções de borda (preço por tamanho) --- */
+    function drawBorda() {
+      const prev = state.borda;
+      let html = '<option value="">Sem borda</option>';
+      (MENU.bordas || []).forEach((g, gi) => {
+        html += '<optgroup label="' + esc(g.title) + '">';
+        g.flavors.forEach((name, fi) => {
+          const val = gi + "." + fi;
+          const pr = state.size ? Number(g.prices[state.size] || 0) : null;
+          html +=
+            '<option value="' +
+            val +
+            '">' +
+            esc(name) +
+            (pr != null ? " — +" + brl(pr) : "") +
+            "</option>";
+        });
+        html += "</optgroup>";
+      });
+      bordaEl.innerHTML = html;
+      bordaEl.value = prev || "";
+      if (bordaEl.value !== prev) {
+        state.borda = "";
+        bordaEl.value = "";
+      }
+    }
+
+    /* --- resumo + total + link do WhatsApp --- */
+    function drawSummary() {
+      const lines = [];
+      let total = 0;
+
+      if (state.size) lines.push(["Tamanho", sizeLabel(state.size)]);
+
+      state.sel.forEach((idx, i) => {
+        const it = flat[idx];
+        lines.push([
+          state.sel.length > 1 ? "Sabor " + (i + 1) : "Sabor",
+          it.f.name + " · " + it.cat.title.replace(/^Pizzas\s*/, ""),
+        ]);
+      });
+
+      if (state.sel.length && state.size) {
+        total = state.sel.reduce(
+          (mx, idx) => Math.max(mx, Number(flat[idx].cat.prices[state.size] || 0)),
+          0
+        );
+      }
+
+      const bd = bordaInfo();
+      if (bd) {
+        lines.push(["Borda", bd.name + " — +" + brl(bd.price)]);
+        total += bd.price;
+      }
+
+      if (state.sel.length === 2) lines.push(["Regra da mistura", "Vale o sabor mais caro"]);
+
+      state.total = total;
+      state.ready = !!state.size && state.sel.length > 0;
+
+      linesEl.innerHTML = lines.length
+        ? lines
+            .map(
+              (l) =>
+                '<div class="m-line"><span>' + esc(l[0]) + "</span><b>" + esc(l[1]) + "</b></div>"
+            )
+            .join("")
+        : '<p class="m-line-ph">Comece escolhendo o tamanho e pelo menos 1 sabor.</p>';
+
+      totalEl.textContent = state.ready ? brl(total) : "R$ —";
+      sendEl.classList.toggle("is-off", !state.ready);
+      sendEl.setAttribute("aria-disabled", state.ready ? "false" : "true");
+      sendEl.href = state.ready ? waHref() : "#";
+    }
+
+    function waHref() {
+      const L = [
+        "Olá! Quero fazer um pedido pela " + B.name + " 🍕",
+        "",
+        "🍕 Monte sua pizza",
+        "• Tamanho: " + sizeLabel(state.size),
+      ];
+      state.sel.forEach((idx, i) => {
+        const it = flat[idx];
+        L.push(
+          "• Sabor" + (state.sel.length > 1 ? " " + (i + 1) : "") + ": " + it.f.name +
+            " (" + it.cat.title.replace(/^Pizzas\s*/, "") + ")"
+        );
+      });
+      const bd = bordaInfo();
+      if (bd) L.push("• Borda: " + bd.name + " (+" + brl(bd.price) + ")");
+      L.push("💰 Total: " + brl(state.total));
+      const obs = (obsEl.value || "").trim();
+      if (obs) L.push("📝 " + obs);
+
+      const mm = B.whatsappUrl.match(/wa\.me\/(\d+)/);
+      return mm
+        ? "https://wa.me/" + mm[1] + "?text=" + encodeURIComponent(L.join("\n"))
+        : B.whatsappUrl;
+    }
+
+    function refreshLink() {
+      if (state.ready) sendEl.href = waHref();
+    }
+
+    function warn() {
+      warnEl.classList.remove("is-hidden");
+      if (warnTimer) clearTimeout(warnTimer);
+      warnTimer = setTimeout(() => warnEl.classList.add("is-hidden"), 3200);
+    }
+
+    /* --- eventos --- */
+    sizeBtns.forEach((b) => {
+      b.addEventListener("click", () => {
+        state.size = b.dataset.size;
+        sizeBtns.forEach((x) => {
+          const on = x === b;
+          x.classList.toggle("is-on", on);
+          x.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        drawBorda();
+        drawSummary();
+      });
+    });
+
+    flavorsBox.addEventListener("click", (e) => {
+      const btn = e.target.closest(".m-f");
+      if (!btn) return;
+      const i = Number(btn.dataset.i);
+      const at = state.sel.indexOf(i);
+      if (at !== -1) state.sel.splice(at, 1);
+      else if (state.sel.length < 2) state.sel.push(i);
+      else {
+        warn();
+        return;
+      }
+      drawFlavors();
+      drawSel();
+      drawSummary();
+    });
+
+    selBox.addEventListener("click", (e) => {
+      const btn = e.target.closest(".m-chip");
+      if (!btn) return;
+      const i = Number(btn.dataset.i);
+      state.sel = state.sel.filter((x) => x !== i);
+      drawFlavors();
+      drawSel();
+      drawSummary();
+    });
+
+    filterEl.addEventListener("input", drawFlavors);
+    bordaEl.addEventListener("change", () => {
+      state.borda = bordaEl.value;
+      drawSummary();
+    });
+    obsEl.addEventListener("input", refreshLink);
+    sendEl.addEventListener("click", (e) => {
+      if (!state.ready) e.preventDefault();
+    });
+
+    /* --- início --- */
+    drawFlavors();
+    drawSel();
+    drawBorda();
+    drawSummary();
+  }
+
   /* ------------------------------------------------------------ */
   render();
   setupSearch();
+  setupBuilder();
   setupSpy();
 })();
