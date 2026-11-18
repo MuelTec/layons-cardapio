@@ -314,12 +314,12 @@ const MENU = {
         },
         {
           "n": "22",
-          "name": "Fralho",
+          "name": "Frango ",
           "desc": "Molho de tomate especial da casa, muçarela, frango desfiado, tomate, milho, alho frito e orégano."
         },
         {
           "n": "23",
-          "name": "Fralho Cheese",
+          "name": "Frango Cheese",
           "desc": "Molho de tomate especial da casa, muçarela, frango desfiado, tomate, milho, alho frito, cream cheese e orégano."
         },
         {
