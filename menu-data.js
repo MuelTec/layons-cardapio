@@ -14,7 +14,9 @@ const MENU = {
     "instagramUrl": "https://www.instagram.com/layons.pizzaria/",
     "phone": "(99) 99162-0986",
     "whatsappUrl": "https://wa.me/5599991620986?text=Ol%C3%A1!%20Vim%20pelo%20card%C3%A1pio%20digital%20da%20Layon's%20Pizzaria%20%F0%9F%8D%95",
-    "cards": "Aceitamos os cartões"
+    "cards": "Aceitamos os cartões",
+    "pixKey": "",
+    "pixCity": "Imperatriz"
   },
   "sizes": [
     {
@@ -34,33 +36,6 @@ const MENU = {
       "label": "Extra Grande"
     }
   ],
-  "combo": {
-    "title": "Combo da Casa",
-    "tagline": "O combo que mais sai — perfeito para dividir ou matar a fome",
-    "includes": [
-      {
-        "name": "Calzone",
-        "note": "escolha o sabor",
-        "img": "img/calzone.png"
-      },
-      {
-        "name": "Batata frita 200g",
-        "note": "porção crocante",
-        "img": "img/batata.png"
-      },
-      {
-        "name": "Refrigerante 350ml",
-        "note": "lata gelada",
-        "img": "img/refri-lata.png"
-      }
-    ],
-    "prices": {
-      "P": 35,
-      "M": 39,
-      "G": 47,
-      "GG": 54
-    }
-  },
   "mostOrdered": [
     {
       "flavor": "07",

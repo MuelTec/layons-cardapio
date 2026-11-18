@@ -714,188 +714,6 @@ main {
 }
 
 /* ------------------------------------------------------------
-   COMBO
-   ------------------------------------------------------------ */
-.sec--combo {
-  padding-top: 52px;
-}
-
-.combo-card {
-  position: relative;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 1.25fr 1fr;
-  gap: 34px;
-  padding: 40px 42px;
-  border-radius: 26px;
-  background:
-    radial-gradient(700px 300px at 8% -30%, rgba(232, 64, 47, 0.4), transparent 65%),
-    radial-gradient(500px 320px at 100% 120%, rgba(243, 176, 74, 0.16), transparent 60%),
-    linear-gradient(150deg, #2e1c15, #201511);
-  border: 1px solid rgba(232, 64, 47, 0.42);
-  box-shadow: var(--shadow);
-}
-
-.combo-card::after {
-  content: "";
-  position: absolute;
-  right: -70px;
-  top: -70px;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  border: 34px solid rgba(243, 176, 74, 0.07);
-  pointer-events: none;
-}
-
-.combo-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #fff;
-  background: var(--red);
-  border-radius: 999px;
-  padding: 6px 14px;
-  margin-bottom: 14px;
-}
-
-.combo-card h2 {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(1.8rem, 3.5vw, 2.7rem);
-  line-height: 1.08;
-}
-
-.combo-card .combo-tagline {
-  color: var(--muted);
-  font-size: 0.95rem;
-  margin-top: 8px;
-}
-
-.combo-inclui {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin: 24px 0 12px;
-}
-
-.combo-list {
-  list-style: none;
-  display: grid;
-  gap: 10px;
-}
-
-.combo-list li {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font-size: 0.98rem;
-  font-weight: 500;
-  padding: 11px 15px;
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--line);
-}
-
-.combo-list li::before {
-  content: "✓";
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(37, 211, 102, 0.16);
-  color: var(--green);
-  font-size: 0.75rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.combo-list li span {
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 400;
-}
-
-.combo-list li .combo-name {
-  color: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-}
-
-.combo-list li.has-thumb {
-  gap: 14px;
-  padding: 9px 15px;
-}
-
-.combo-list li.has-thumb::before {
-  display: none;
-}
-
-.combo-thumb {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  flex-shrink: 0;
-  filter: drop-shadow(0 7px 11px rgba(0, 0, 0, 0.5));
-}
-
-.combo-buy {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-  padding: 26px;
-  border-radius: 20px;
-  background: rgba(21, 15, 12, 0.55);
-  border: 1px solid rgba(243, 176, 74, 0.32);
-  text-align: center;
-}
-
-.combo-buy h3 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.05rem;
-  color: var(--gold);
-  letter-spacing: 0.04em;
-}
-
-.combo-buy .prices {
-  justify-content: center;
-  gap: 10px;
-}
-
-.combo-buy .price {
-  flex-direction: column;
-  gap: 4px;
-  padding: 13px 17px;
-  min-width: 84px;
-  background: rgba(243, 176, 74, 0.1);
-}
-
-.combo-buy .price i {
-  border: none;
-  background: transparent;
-  font-size: 0.78rem;
-  color: var(--gold);
-}
-
-.combo-buy .price b {
-  font-size: 1.32rem;
-}
-
-.combo-buy .btn {
-  justify-content: center;
-  margin-top: 4px;
-}
-
-/* ------------------------------------------------------------
    BORDAS / APERITIVOS
    ------------------------------------------------------------ */
 .trio {
@@ -1964,16 +1782,255 @@ main {
 }
 
 /* ------------------------------------------------------------
-   RESPONSIVO
+   PIX
    ------------------------------------------------------------ */
-@media (max-width: 900px) {
-  .combo-card {
+.sec--pix {
+  padding-top: 26px;
+}
+
+.pix-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 34px;
+  align-items: center;
+  padding: 34px 38px;
+  border-radius: 24px;
+  background:
+    radial-gradient(600px 260px at 0% -20%, rgba(37, 211, 102, 0.16), transparent 65%),
+    linear-gradient(150deg, #221a15, #191310);
+  border: 1px solid rgba(37, 211, 102, 0.32);
+  box-shadow: var(--shadow);
+}
+
+.pix-qr {
+  width: 216px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.pix-qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pix-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #062a15;
+  background: var(--green);
+  border-radius: 999px;
+  padding: 6px 14px;
+  margin-bottom: 12px;
+}
+
+.pix-info h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.1;
+}
+
+.pix-info p {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-top: 8px;
+  max-width: 56ch;
+}
+
+.pix-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 15px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+}
+
+.pix-key span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.pix-key code {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.pix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.pix-actions .btn {
+  justify-content: center;
+}
+
+/* --- categoria em destaque na lista de sabores --- */
+.m-focus {
+  margin: 10px 0 0;
+  padding: 9px 13px;
+  border-radius: 11px;
+  background: rgba(243, 176, 74, 0.1);
+  border: 1px dashed rgba(243, 176, 74, 0.45);
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.m-focus b {
+  color: var(--gold);
+}
+
+/* --- Pix na revisao do montador --- */
+.m-pix {
+  margin-bottom: 14px;
+  padding: 15px;
+  border-radius: 15px;
+  background: rgba(37, 211, 102, 0.08);
+  border: 1px solid rgba(37, 211, 102, 0.35);
+}
+
+.m-pix-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.m-pix-head b {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--green);
+}
+
+.m-pix-head small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.m-pix-body {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.m-pix-qr {
+  width: 132px;
+  flex-shrink: 0;
+  padding: 8px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.m-pix-qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.m-pix-side {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.m-pix-side p {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.m-pix-side .btn {
+  justify-content: center;
+}
+
+/* --- precos clicaveis (abrem o montador) --- */
+.price--btn {
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.price--btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(243, 176, 74, 0.75);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+.price--btn:active {
+  transform: translateY(0);
+}
+
+.price--btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.btn.is-copied {
+  background: var(--green);
+  border-color: var(--green);
+  color: #062a15;
+}
+
+@media (max-width: 760px) {
+  .pix-card {
     grid-template-columns: 1fr;
-    padding: 30px 26px;
-    gap: 24px;
+    justify-items: center;
+    text-align: center;
+    padding: 26px 20px;
+    gap: 20px;
+  }
+
+  .pix-qr {
+    width: 200px;
+  }
+
+  .pix-key,
+  .pix-actions {
+    justify-content: center;
+  }
+
+  .pix-info p {
+    max-width: none;
+  }
+
+  .m-pix-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .m-pix-qr {
+    width: 150px;
+    align-self: center;
+  }
+
+  .m-pix-side {
+    justify-items: center;
+    text-align: center;
   }
 }
 
+/* ------------------------------------------------------------
+   RESPONSIVO
+   ------------------------------------------------------------ */
 @media (max-width: 760px) {
   .container {
     width: min(1160px, 100% - 30px);
@@ -2036,16 +2093,6 @@ main {
 
   .g-item--0 {
     aspect-ratio: 16 / 10;
-  }
-
-  .combo-list li.has-thumb {
-    gap: 12px;
-    padding: 8px 13px;
-  }
-
-  .combo-thumb {
-    width: 42px;
-    height: 42px;
   }
 
   .footer-cards {
@@ -2333,81 +2380,6 @@ main {
     font-size: 8.6pt;
   }
 
-  /* --- Combo --- */
-  .combo-card {
-    grid-template-columns: 1.2fr 1fr;
-    gap: 8mm;
-    padding: 10mm;
-    background: #fdf7ec !important;
-    border: 1.5px solid #e0c48c;
-    box-shadow: none;
-    break-inside: avoid;
-  }
-
-  .combo-card::after {
-    display: none;
-  }
-
-  .combo-card h2 {
-    color: #1d1512;
-    font-size: 26pt;
-  }
-
-  .combo-tagline,
-  .combo-list li span {
-    color: #6b5d53;
-  }
-
-  .combo-tag {
-    background: #fff !important;
-    color: #c22e1e;
-    border: 1.5px solid #c22e1e;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  .combo-inclui {
-    color: #a86a12;
-  }
-
-  .combo-list li {
-    background: #fff;
-    border: 1px solid #e8ded2;
-    color: #1d1512;
-    font-size: 10.5pt;
-    padding: 8px 12px;
-  }
-
-  .combo-list li::before {
-    background: #e7f6ec;
-    color: #1e8a4c;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  .combo-buy {
-    background: #fff;
-    border: 1px solid #e0c48c;
-  }
-
-  .combo-buy h3 {
-    color: #a86a12;
-  }
-
-  .combo-buy .price {
-    background: #fbf3e6;
-    border-color: #ecd9b7;
-  }
-
-  .combo-buy .price b {
-    color: #1d1512;
-    font-size: 15pt;
-  }
-
-  .combo-buy .price i {
-    color: #a86a12;
-  }
-
   /* --- Bordas / bebidas --- */
   .trio,
   .duo {
@@ -2553,18 +2525,6 @@ main {
     );
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
-  }
-
-  /* --- Combo: miniaturas --- */
-  .combo-list li.has-thumb {
-    gap: 3.5mm;
-    padding: 2mm 3mm;
-  }
-
-  .combo-thumb {
-    width: 11mm;
-    height: 11mm;
-    filter: none;
   }
 
   /* --- Galeria: página de fotos --- */

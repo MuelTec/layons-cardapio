@@ -300,7 +300,7 @@
     if (tab === "sabores") html = renderSabores();
     else if (tab === "bebidas") html = renderBebidas();
     else if (tab === "bordas") html = renderBordas();
-    else if (tab === "combo") html = renderCombo();
+    else if (tab === "destaques") html = renderDestaques();
     else if (tab === "fotos") html = renderFotos();
     else if (tab === "contato") html = renderContato();
     else html = renderPublicar();
@@ -521,39 +521,14 @@
   }
 
   /* ============================================================
-     ABA — COMBO E MAIS PEDIDAS
+     ABA — DESTAQUES (mais pedidas)
      ============================================================ */
 
-  function renderCombo() {
-    const sizes = D.sizes;
+  function renderDestaques() {
     let html = head(
-      "Combo e destaques",
-      "O Combo da Casa (itens, preço por tamanho) e a lista de “Mais pedidas” do topo do site."
+      "Destaques",
+      "A lista de “Mais pedidas” exibida no topo do site."
     );
-
-    /* combo */
-    const c = D.combo;
-    html +=
-      '<div class="a-card"><h2>' + esc(c.title) + "</h2>" +
-      '<div class="a-grid">' +
-      field("Título", "combo.title", c.title) +
-      field("Chamada", "combo.tagline", c.tagline) +
-      "</div>" +
-      priceGrid("combo", c.prices, sizes);
-
-    html += '<div class="a-sub">Itens inclusos:</div>';
-    c.includes.forEach(function (inc, i) {
-      const p = "combo.includes." + i;
-      html +=
-        '<div class="a-item a-item--3">' +
-        '<input type="text" data-path="' + p + '.name" value="' + esc(inc.name) + '" placeholder="Nome">' +
-        '<input type="text" data-path="' + p + '.note" value="' + esc(inc.note || "") + '" placeholder="Nota">' +
-        '<input type="text" data-path="' + p + '.img" value="' + esc(inc.img || "") + '" placeholder="img/arquivo.png">' +
-        '<button type="button" class="a-del" data-act="del-include" data-i="' + i + '" title="Excluir">×</button>' +
-        "</div>";
-    });
-    html +=
-      '<div class="a-card-actions"><button type="button" class="a-btn a-btn--sm" data-act="add-include">+ Item incluso</button></div></div>';
 
     /* mais pedidas */
     html +=
@@ -666,6 +641,15 @@
       '<label class="a-field"><span>Mensagem padrão</span><textarea data-special="wa-text">' + esc(wa.text) + "</textarea></label>" +
       "</div>" +
       '<p class="a-hint">Link atual: <code>' + esc(D.brand.whatsappUrl) + "</code></p></div>";
+
+    html +=
+      '<div class="a-card"><h2>Pagamento Pix</h2>' +
+      '<p class="a-sub">Com a chave preenchida, o site exibe a seção “Pague com Pix” e o QR Code (com o valor do pedido) na revisão do montador. Deixe a chave em branco para ocultar o Pix.</p>' +
+      '<div class="a-grid">' +
+      field("Chave Pix", "brand.pixKey", b.pixKey || "") +
+      field("Cidade (Pix)", "brand.pixCity", b.pixCity || "") +
+      "</div>" +
+      '<p class="a-hint">Aceita CPF, CNPJ, e-mail, telefone (<code>+55…</code>) ou chave aleatória. A cidade entra no código Pix (até 15 letras, sem acento).</p></div>';
 
     return html;
   }
@@ -1012,12 +996,6 @@
         break;
       case "del-aperi":
         D.aperitivos.splice(i, 1);
-        break;
-      case "add-include":
-        D.combo.includes.push({ name: "", note: "", img: "img/" });
-        break;
-      case "del-include":
-        D.combo.includes.splice(i, 1);
         break;
       case "add-most":
         D.mostOrdered.push({

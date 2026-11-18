@@ -26,6 +26,110 @@
       .toLowerCase();
 
   /* ------------------------------------------------------------
+     Pix — BR Code (EMV), QR Code e copia-e-cola
+     ------------------------------------------------------------ */
+  const PIX_KEY = String(B.pixKey || "").trim();
+  const PIX_CITY = String(B.pixCity || "").trim() || "Imperatriz";
+
+  const pixAscii = (s, max) =>
+    String(s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/['’`´./]/g, "")
+      .replace(/[^A-Za-z0-9 ]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, max)
+      .trim();
+
+  function pixTlv(id, val) {
+    const v = String(val);
+    return id + String(v.length).padStart(2, "0") + v;
+  }
+
+  function pixCrc16(str) {
+    let crc = 0xffff;
+    for (let i = 0; i < str.length; i++) {
+      crc ^= str.charCodeAt(i) << 8;
+      for (let b = 0; b < 8; b++) {
+        crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+      }
+    }
+    return ("0000" + crc.toString(16).toUpperCase()).slice(-4);
+  }
+
+  /* payload Pix copia-e-cola (amount 0 = sem valor definido) */
+  function pixPayload(amount) {
+    if (!PIX_KEY) return "";
+    const mai = pixTlv("00", "br.gov.bcb.pix") + pixTlv("01", PIX_KEY);
+    let p =
+      pixTlv("00", "01") +
+      pixTlv("26", mai) +
+      pixTlv("52", "0000") +
+      pixTlv("53", "986");
+    if (amount > 0) p += pixTlv("54", Number(amount).toFixed(2));
+    p +=
+      pixTlv("58", "BR") +
+      pixTlv("59", pixAscii(B.name, 25)) +
+      pixTlv("60", pixAscii(PIX_CITY, 15)) +
+      pixTlv("62", pixTlv("05", "***"));
+    return p + "6304" + pixCrc16(p + "6304");
+  }
+
+  function qrSvg(payload) {
+    if (!payload || typeof qrcode !== "function") return "";
+    try {
+      if (qrcode.stringToBytesFuncs && qrcode.stringToBytesFuncs["UTF-8"]) {
+        qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
+      }
+      const qr = qrcode(0, "M");
+      qr.addData(payload);
+      qr.make();
+      return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function copyText(text) {
+    const fallback = () => {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch (e) {}
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  /* botão que copia um texto e mostra "Copiado ✓" por instantes */
+  function bindCopy(btn, getText) {
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const text = getText();
+      if (!text) return;
+      copyText(text);
+      const old = btn.textContent;
+      btn.textContent = "Copiado ✓";
+      btn.classList.add("is-copied");
+      setTimeout(() => {
+        btn.textContent = old;
+        btn.classList.remove("is-copied");
+      }, 1800);
+    });
+  }
+
+  /* ------------------------------------------------------------
      Ícones
      ------------------------------------------------------------ */
   const ICONS = {
@@ -52,24 +156,41 @@
   };
 
   /* ------------------------------------------------------------
-     Faixa de preços
+     Faixa de preços (clicável: já abre o montador com o tamanho)
      ------------------------------------------------------------ */
-  function pricesHTML(prices, small) {
+  function pricesHTML(prices, small, cat) {
     return (
       '<div class="prices' +
       (small ? " prices--sm" : "") +
       '">' +
       MENU.sizes
-        .map(
-          (s) =>
-            '<span class="price" title="' +
-            esc(s.label) +
-            '"><i>' +
+        .map((s) => {
+          const inner = "<i>" + s.key + "</i><b>" + brl(prices[s.key]) + "</b>";
+          if (!cat) {
+            return (
+              '<span class="price" title="' + esc(s.label) + '">' + inner + "</span>"
+            );
+          }
+          return (
+            '<button type="button" class="price price--btn" data-size="' +
             s.key +
-            "</i><b>" +
+            '" data-cat="' +
+            esc(cat.id) +
+            '" title="Montar ' +
+            esc(cat.title) +
+            " — tamanho " +
+            esc(s.label) +
+            '" aria-label="Montar ' +
+            esc(cat.title) +
+            " tamanho " +
+            esc(s.label) +
+            ", " +
             brl(prices[s.key]) +
-            "</b></span>"
-        )
+            '">' +
+            inner +
+            "</button>"
+          );
+        })
         .join("") +
       "</div>"
     );
@@ -92,7 +213,7 @@
         : "") +
       "</h2>" +
       "</div>" +
-      pricesHTML(cat.prices) +
+      pricesHTML(cat.prices, false, cat) +
       "</header>"
     );
   }
@@ -147,60 +268,6 @@
       '><div class="container">' +
       inner +
       "</div></section>"
-    );
-  }
-
-  /* ------------------------------------------------------------
-     Combo
-     ------------------------------------------------------------ */
-  function comboHTML() {
-    const c = MENU.combo;
-    return (
-      '<section class="sec sec--combo" id="combos"><div class="container">' +
-      '<div class="combo-card" data-search="' +
-      esc(
-        normalize(
-          c.title +
-            " combo " +
-            c.includes.map((i) => i.name + " " + i.note).join(" ")
-        )
-      ) +
-      '">' +
-      '<div class="combo-info">' +
-      '<span class="combo-tag">★ O mais pedido</span>' +
-      "<h2>" +
-      esc(c.title) +
-      "</h2>" +
-      '<p class="combo-tagline">' +
-      esc(c.tagline) +
-      "</p>" +
-      '<p class="combo-inclui">Inclui</p>' +
-      '<ul class="combo-list">' +
-      c.includes
-        .map(
-          (i) =>
-            "<li" +
-            (i.img ? ' class="has-thumb"' : "") +
-            ">" +
-            (i.img
-              ? '<img class="combo-thumb" src="' +
-                esc(i.img) +
-                '" alt="" aria-hidden="true" loading="lazy">'
-              : "") +
-            "<span class=\"combo-name\">" +
-            esc(i.name) +
-            " <span>· " +
-            esc(i.note) +
-            "</span></span></li>"
-        )
-        .join("") +
-      "</ul></div>" +
-      '<div class="combo-buy"><h3>Escolha o tamanho</h3>' +
-      pricesHTML(c.prices) +
-      '<a class="btn btn-primary" href="' +
-      B.whatsappUrl +
-      '" target="_blank" rel="noopener">Pedir no WhatsApp</a>' +
-      "</div></div></div></section>"
     );
   }
 
@@ -332,6 +399,31 @@
   }
 
   /* ------------------------------------------------------------
+     PAGAMENTO PIX (seção própria)
+     ------------------------------------------------------------ */
+  function pixSectionHTML() {
+    if (!PIX_KEY) return "";
+    return (
+      '<section class="sec sec--pix no-print" id="pix"><div class="container">' +
+      '<div class="pix-card">' +
+      '<div class="pix-qr" id="pixQr" aria-hidden="true"></div>' +
+      '<div class="pix-info">' +
+      '<span class="pix-tag">Pague com Pix</span>' +
+      "<h2>Pix rápido e sem taxa</h2>" +
+      "<p>Aponte a câmera do celular para o QR Code ou use o código copia-e-cola " +
+      "no aplicativo do seu banco. Depois é só enviar o pedido pelo WhatsApp.</p>" +
+      '<div class="pix-key"><span>Chave Pix</span><code id="pixKeyText">' +
+      esc(PIX_KEY) +
+      "</code></div>" +
+      '<div class="pix-actions">' +
+      '<button type="button" class="btn btn-primary" id="pixCopyCode">Copiar código Pix</button>' +
+      '<button type="button" class="btn btn-ghost" id="pixCopyKey">Copiar chave</button>' +
+      "</div>" +
+      "</div></div></div></section>"
+    );
+  }
+
+  /* ------------------------------------------------------------
      Galeria de fotos
      ------------------------------------------------------------ */
   function galleryHTML() {
@@ -423,6 +515,7 @@
       '<div class="m-panel" data-panel="2">' +
       '<div class="m-step"><h3><span class="m-num">2</span> Sabores <small id="mMax">até 3 no GG</small></h3>' +
       '<input type="search" class="m-filter" id="mFilter" placeholder="Buscar sabor… (ex.: calabresa)" autocomplete="off" aria-label="Buscar sabor para montar">' +
+      '<p class="m-focus is-hidden" id="mFocus"></p>' +
       '<div class="m-flavors" id="mFlavors"></div>' +
       '<div class="m-sel" id="mSel"></div>' +
       '<div class="m-borda-wrap" id="mBordaWrap"><h4>Borda recheada <small>opcional</small></h4>' +
@@ -437,6 +530,14 @@
       '<div class="m-panel m-summary" data-panel="4"><h3>Seu pedido</h3>' +
       '<div class="m-lines" id="mLines"></div>' +
       '<div class="m-total"><span>Total</span><b id="mTotal">R$ —</b></div>' +
+      '<div class="m-pix is-hidden" id="mPix">' +
+      '<div class="m-pix-head"><b>⚡ Pague com Pix</b><small>opcional — o pedido segue pelo WhatsApp</small></div>' +
+      '<div class="m-pix-body">' +
+      '<div class="m-pix-qr" id="mPixQr"></div>' +
+      '<div class="m-pix-side">' +
+      "<p>O QR Code já sai com o valor do pedido. Também dá para copiar o código e colar no app do seu banco.</p>" +
+      '<button type="button" class="btn btn-ghost" id="mPixCopy">Copiar código Pix</button>' +
+      "</div></div></div>" +
       '<input type="text" class="m-obs" id="mObs" placeholder="Observações (opcional): sem cebola…" maxlength="140">' +
       '<a class="btn btn-primary m-send" id="mSend" href="#" target="_blank" rel="noopener">Enviar pedido no WhatsApp</a>' +
       '<p class="m-note">Na mistura de sabores vale o preço do sabor mais caro. ' +
@@ -457,19 +558,23 @@
      Montagem das seções + chips
      ------------------------------------------------------------ */
   const CHIPS = [
-    { id: "combos", label: "Combos" },
     { id: "montar", label: "Montar" },
+    {
+      id: "simples",
+      label: "Pizzas",
+      match: [
+        "simples",
+        "tradicionais",
+        "especiais",
+        "premium",
+        "premium-especiais",
+        "doces",
+        "bordas",
+      ],
+    },
     { id: "calzones", label: "Calzones" },
-    { id: "simples", label: "Simples" },
-    { id: "tradicionais", label: "Tradicionais" },
-    { id: "especiais", label: "Especiais" },
-    { id: "premium", label: "Premium" },
-    { id: "premium-especiais", label: "Premium Esp." },
-    { id: "doces", label: "Doces" },
-    { id: "bordas", label: "Bordas" },
     { id: "bebidas", label: "Bebidas" },
     { id: "cervejas", label: "Cervejas" },
-    { id: "galeria", label: "Fotos" },
   ];
 
   const PAGE_BREAKS = {
@@ -501,7 +606,7 @@
     const ribbonItems = [
       "Pizzas artesanais",
       "Calzones recheados",
-      "Combos da casa",
+      "Bordas recheadas",
       "Pizzas doces",
       "Bebidas geladas",
       B.cards,
@@ -533,8 +638,7 @@
     ).join("");
 
     /* seções */
-    let html = comboHTML();
-    html += montarHTML();
+    let html = montarHTML();
     html += menuSection(MENU.calzones, {});
     MENU.pizzas.forEach((cat) => {
       html += menuSection(cat, { pageBreak: !!PAGE_BREAKS[cat.id] });
@@ -542,8 +646,28 @@
     html += bordasHTML();
     html += bebidasHTML();
     html += cervejasHTML();
+    html += pixSectionHTML();
     html += galleryHTML();
     $("#sections").innerHTML = html;
+
+    /* atalho: clicar num tamanho do card já abre o montador */
+    $$("#sections .price--btn").forEach((b) => {
+      b.addEventListener("click", () => {
+        document.dispatchEvent(
+          new CustomEvent("layon:build", {
+            detail: { size: b.dataset.size, cat: b.dataset.cat },
+          })
+        );
+      });
+    });
+
+    /* seção Pix: QR + copiar código / chave */
+    const pixQr = $("#pixQr");
+    if (pixQr) {
+      pixQr.innerHTML = qrSvg(pixPayload(0));
+      bindCopy($("#pixCopyCode"), () => pixPayload(0));
+      bindCopy($("#pixCopyKey"), () => PIX_KEY);
+    }
 
     /* atalho: montar um calzone direto da seção */
     const czHead = document.querySelector("#calzones .sec-head");
@@ -635,13 +759,17 @@
     const byId = {};
     chips.forEach((c) => (byId[c.dataset.chip] = c));
 
+    /* seção → chip (uma categoria pode alimentar o mesmo chip, ex.: Pizzas) */
+    const secToChip = {};
+    CHIPS.forEach((c) => (c.match || [c.id]).forEach((id) => (secToChip[id] = c.id)));
+
     const obs = new IntersectionObserver(
       (entries) => {
         entries.forEach((en) => {
           if (!en.isIntersecting) return;
-          const id = en.target.id;
-          chips.forEach((c) => c.classList.toggle("active", c.dataset.chip === id));
-          const active = byId[id];
+          const chipId = secToChip[en.target.id];
+          chips.forEach((c) => c.classList.toggle("active", !!chipId && c.dataset.chip === chipId));
+          const active = chipId ? byId[chipId] : null;
           if (active && active.scrollIntoView) {
             active.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
           }
@@ -650,8 +778,8 @@
       { rootMargin: "-40% 0px -55% 0px", threshold: 0 }
     );
 
-    CHIPS.forEach((c) => {
-      const sec = document.getElementById(c.id);
+    /* observa todas as seções: as não mapeadas (Pix, fotos, CTA) limpam o chip */
+    $$(".sec").forEach((sec) => {
       if (sec) obs.observe(sec);
     });
   }
@@ -700,6 +828,9 @@
 
     const state = { type: "pizza", step: 1, size: null, sel: [], borda: "", drinks: [], total: 0, ready: false };
     let warnTimer = null;
+    let focusCat = null; /* categoria em destaque na lista (não limita a escolha) */
+    let pixPayloadNow = "";
+    let lastPixTotal = null;
 
     const flavorsBox = $("#mFlavors", sec);
     const drinksBox = $("#mDrinks", sec);
@@ -747,12 +878,37 @@
     };
 
     /* --- lista de sabores (com filtro) --- */
+    function updateFocus() {
+      const el = $("#mFocus", sec);
+      if (!el) return;
+      const cat = focusCat ? groups.find((g) => g.cat.id === focusCat) : null;
+      if (!cat) {
+        el.classList.add("is-hidden");
+        el.innerHTML = "";
+        return;
+      }
+      el.innerHTML =
+        "Sabores de <b>" +
+        esc(cat.cat.title) +
+        "</b> vêm primeiro — todas as outras categorias seguem liberadas.";
+      el.classList.remove("is-hidden");
+    }
+
     function drawFlavors() {
       const q = normalize((filterEl.value || "").trim());
       let html = "";
       let count = 0;
 
-      groups.forEach((gr) => {
+      const list = focusCat
+        ? groups
+            .slice()
+            .sort(
+              (a, b) => (b.cat.id === focusCat ? 1 : 0) - (a.cat.id === focusCat ? 1 : 0)
+            )
+        : groups;
+      updateFocus();
+
+      list.forEach((gr) => {
         const rows = gr.items.filter(
           (it) => !q || normalize((it.f.n ? it.f.n + " " : "") + it.f.name + " " + it.f.desc).indexOf(q) !== -1
         );
@@ -919,8 +1075,27 @@
       sendEl.setAttribute("aria-disabled", state.ready ? "false" : "true");
       sendEl.href = state.ready ? waHref() : "#";
 
+      updatePix(total);
       drawMini();
       updateNav();
+    }
+
+    /* --- bloco Pix da revisão: QR com o valor do pedido --- */
+    function updatePix(total) {
+      const box = $("#mPix", sec);
+      if (!box) return;
+      const show = !!PIX_KEY && state.ready && total > 0;
+      box.classList.toggle("is-hidden", !show);
+      if (!show) {
+        pixPayloadNow = "";
+        lastPixTotal = null;
+        return;
+      }
+      if (lastPixTotal === total) return;
+      lastPixTotal = total;
+      pixPayloadNow = pixPayload(total);
+      const qr = $("#mPixQr", sec);
+      if (qr) qr.innerHTML = qrSvg(pixPayloadNow);
     }
 
     /* --- resumo enxuto no rodapé do passo a passo --- */
@@ -1051,6 +1226,7 @@
         buildSource(key);
         state.sel = [];
         state.borda = "";
+        focusCat = null;
         filterEl.value = "";
         if (bordaWrap) bordaWrap.hidden = key !== "pizza";
         updateMaxBadge();
@@ -1065,6 +1241,7 @@
       const btn = e.target.closest(".m-f");
       if (!btn) return;
       const i = Number(btn.dataset.i);
+      if (focusCat && flat[i] && flat[i].cat.id !== focusCat) focusCat = null;
       const at = state.sel.indexOf(i);
       if (at !== -1) state.sel.splice(at, 1);
       else if (state.sel.length < maxFlavors()) {
@@ -1090,7 +1267,10 @@
       drawSummary();
     });
 
-    filterEl.addEventListener("input", drawFlavors);
+    filterEl.addEventListener("input", () => {
+      if (focusCat) focusCat = null;
+      drawFlavors();
+    });
     drinksBox.addEventListener("click", (e) => {
       const btn = e.target.closest(".m-d");
       if (!btn) return;
@@ -1157,6 +1337,36 @@
         if (btn && key !== state.type) btn.click();
       });
     });
+
+    /* atalho vindo dos cards de sabor: tamanho + categoria já marcados */
+    document.addEventListener("layon:build", (e) => {
+      const d = (e && e.detail) || {};
+      if (!d.size) return;
+
+      const wantType = d.cat === "calzones" ? "calzone" : "pizza";
+      if (state.type !== wantType) {
+        const tb = typeBtns.find((x) => x.dataset.type === wantType);
+        if (tb) tb.click();
+      }
+
+      const sb = sizeBtns.find((x) => x.dataset.size === d.size);
+      if (sb && state.size !== d.size) sb.click();
+
+      focusCat = wantType === "pizza" && d.cat ? d.cat : null;
+      drawFlavors();
+      showStep(2);
+
+      const card = sec.querySelector(".montar-card");
+      if (card) {
+        window.scrollTo({
+          top: card.getBoundingClientRect().top + window.scrollY - 74,
+          behavior: "smooth",
+        });
+      }
+    });
+
+    /* copiar código Pix da revisão */
+    bindCopy($("#mPixCopy", sec), () => pixPayloadNow);
 
     /* --- início --- */
     if (bordaWrap) bordaWrap.hidden = false;
