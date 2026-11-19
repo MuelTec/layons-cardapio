@@ -106,6 +106,7 @@ const MENU = {
     "id": "calzones",
     "eyebrow": "Recheio generoso",
     "title": "Calzones",
+    "img": "img/calzone-fatiado.jpg",
     "prices": {
       "P": 25,
       "M": 29,
@@ -192,6 +193,7 @@ const MENU = {
       "id": "simples",
       "eyebrow": "Clássicas da casa",
       "title": "Pizzas Simples",
+      "img": "img/pizza-1.jpg",
       "prices": {
         "P": 39,
         "M": 48,
@@ -285,6 +287,7 @@ const MENU = {
       "id": "tradicionais",
       "eyebrow": "Sempre bem pedidas",
       "title": "Pizzas Tradicionais",
+      "img": "img/pizza-2.jpg",
       "prices": {
         "P": 41,
         "M": 50,
@@ -358,6 +361,7 @@ const MENU = {
       "id": "especiais",
       "eyebrow": "Sabor de outro nível",
       "title": "Pizzas Especiais",
+      "img": "img/pizza-3.jpg",
       "prices": {
         "P": 43,
         "M": 57,
@@ -441,6 +445,7 @@ const MENU = {
       "id": "premium",
       "eyebrow": "Ingredientes selecionados",
       "title": "Pizzas Premium",
+      "img": "img/pizza-4.jpg",
       "prices": {
         "P": 47,
         "M": 61,
@@ -514,6 +519,7 @@ const MENU = {
       "id": "premium-especiais",
       "eyebrow": "Novidade",
       "title": "Pizzas Premium Especiais",
+      "img": "img/pizza-6.jpg",
       "prices": {
         "P": 55,
         "M": 65,
@@ -530,6 +536,7 @@ const MENU = {
       "id": "doces",
       "eyebrow": "Para fechar com doçura",
       "title": "Pizzas Doces",
+      "img": "img/pizza-doce.jpg",
       "prices": {
         "P": 39,
         "M": 48,

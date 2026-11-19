@@ -210,6 +210,41 @@
     return list;
   }
 
+  /* foto de capa de uma seção (sabores / calzones) */
+  function catPhotoHTML(path, cat, withTitle) {
+    const img = cat.img || "";
+    let h =
+      '<div class="a-catphoto">' +
+      "<strong>" +
+      (withTitle ? esc(cat.title || cat.id) : "Foto da seção") +
+      "</strong>" +
+      '<p class="a-sub">Banner exibido no topo da seção no site. Opcional.</p>';
+    if (img) {
+      h +=
+        '<img src="' +
+        esc(img) +
+        '" alt="Foto de ' +
+        esc(cat.title || cat.id) +
+        '" style="width:100%;max-width:340px;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:#000">';
+    } else {
+      h += '<p class="a-empty">Nenhuma foto nesta seção.</p>';
+    }
+    h +=
+      '<div class="a-card-actions">' +
+      '<label class="a-btn a-btn--gold a-btn--sm">' +
+      (img ? "Trocar foto" : "+ Adicionar foto") +
+      '<input type="file" accept="image/*" data-up="cat:' +
+      esc(path) +
+      '"></label>' +
+      (img
+        ? '<button type="button" class="a-btn a-btn--sm" data-act="rm-catimg" data-path="' +
+          esc(path) +
+          '">Remover foto</button>'
+        : "") +
+      "</div></div>";
+    return h;
+  }
+
   function rowsHTML(base, rows) {
     let h = "";
     rows.forEach(function (r, i) {
@@ -359,6 +394,8 @@
         field("Título da seção", path + ".title", cat.title) +
         field("Sobretítulo", path + ".eyebrow", cat.eyebrow) +
         "</div>";
+
+      html += catPhotoHTML(path, cat, false);
 
       html += priceGrid(path, cat.prices, sizes);
 
@@ -560,7 +597,7 @@
   function renderFotos() {
     let html = head(
       "Fotos",
-      "A foto de capa e a galeria do site. As imagens são otimizadas (até 1600px, JPG) e enviadas direto para a pasta img/ do repositório."
+      "A foto de capa, as fotos de cada seção de sabores/calzones e a galeria do site. As imagens são otimizadas (até 1600px, JPG) e enviadas direto para a pasta img/ do repositório."
     );
 
     /* capa */
@@ -569,6 +606,17 @@
       '<p class="a-sub">Imagem de fundo do topo do site — substitui <code>img/hero-pizza.jpg</code>.</p>' +
       '<img src="img/hero-pizza.jpg" alt="Foto de capa atual" style="width:100%;max-width:340px;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:#000">' +
       '<div class="a-card-actions"><label class="a-btn a-btn--gold">Trocar foto de capa<input type="file" accept="image/*" data-up="hero"></label></div></div>';
+
+    /* fotos das seções */
+    html +=
+      '<div class="a-card"><h2>Fotos das seções <span class="a-count">' +
+      cats().length +
+      " seções</span></h2>" +
+      '<p class="a-sub">Uma foto por seção (calzones e categorias de pizza) — aparece no topo de cada seção no site.</p>';
+    cats().forEach(function (entry) {
+      html += catPhotoHTML(entry.path, entry.cat, true);
+    });
+    html += "</div>";
 
     /* galeria */
     html +=
@@ -871,6 +919,10 @@
         let name;
         if (kind === "hero") {
           name = "hero-pizza.jpg";
+        } else if (kind.indexOf("cat:") === 0) {
+          const cp = kind.slice(4);
+          const c = getByPath(cp) || {};
+          name = "cat-" + slug(c.id || cp.replace(/\./g, "-")) + ".jpg";
         } else {
           const base = slug(String(f.name).replace(/\.[^.]+$/, ""));
           name = base + ".jpg";
@@ -878,6 +930,10 @@
         await putImage("img/" + name, dataUrl);
         if (kind === "hero") {
           log("ok", "Foto de capa atualizada: img/" + name);
+        } else if (kind.indexOf("cat:") === 0) {
+          setPath(kind.slice(4) + ".img", "img/" + name);
+          saveDraft();
+          log("ok", "Foto da seção atualizada: img/" + name);
         } else {
           D.gallery.push({
             src: "img/" + name,
@@ -951,6 +1007,9 @@
         break;
       case "rm-aviso":
         delete getByPath(path).comingSoon;
+        break;
+      case "rm-catimg":
+        delete getByPath(path).img;
         break;
       case "add-row":
         getByPath(path).push({ name: "", size: "", price: 0 });

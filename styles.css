@@ -565,6 +565,22 @@ main {
   transform: translateY(-5px);
 }
 
+/* Foto da seção (sabores / calzones) */
+.sec-photo {
+  margin: 0 0 26px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sec-photo img {
+  display: block;
+  width: 100%;
+  height: clamp(180px, 30vw, 360px);
+  object-fit: cover;
+}
+
 /* Faixa de preços */
 .prices {
   display: flex;
@@ -2288,6 +2304,18 @@ main {
     background: #f6efe6;
     border-color: #e6dcd1;
     color: #6b5d53;
+  }
+
+  .sec-photo {
+    margin-bottom: 5mm;
+    border: 1px solid #e8ded2;
+    border-radius: 8px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sec-photo img {
+    height: 42mm;
   }
 
   .price {

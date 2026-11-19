@@ -241,6 +241,15 @@
     const flavors = cat.flavors || [];
     let inner = headHTML(cat, flavors.length);
 
+    if (cat.img) {
+      inner +=
+        '<figure class="sec-photo"><img src="' +
+        esc(cat.img) +
+        '" alt="' +
+        esc(cat.title || "") +
+        '" loading="lazy"></figure>';
+    }
+
     if (flavors.length) {
       inner += '<div class="grid">' + flavors.map(flavorHTML).join("") + "</div>";
     }

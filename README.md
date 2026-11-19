@@ -21,6 +21,7 @@ Edite apenas o arquivo **`menu-data.js`** — não é preciso mexer em mais nada
 
 - **Preços de pizzas/calzones:** cada categoria tem um objeto `prices: { P, M, G, GG }`
 - **Sabores:** cada categoria tem a lista `flavors: [{ n, name, desc }]`
+- **Foto da seção:** cada categoria aceita `img` (ex.: `"img/pizza-1.jpg"`) — banner no topo da seção; troque pela aba **Sabores** ou **Fotos** do painel (`admin.html`)
 - **Bebidas / cervejas / bordas:** listas `MENU.drinks`, `MENU.beers`, `MENU.bordas`
 - **Fotos da galeria:** lista `MENU.gallery` (`src` + `alt`)
 - **Contato:** objeto `MENU.brand` (WhatsApp, Instagram, telefone)
