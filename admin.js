@@ -41,7 +41,28 @@
 
   let BASE = clone(MENU); // o que está publicado (como carregou)
   let D = clone(MENU); // rascunho de trabalho
-  let token = localStorage.getItem(K_TOKEN) || "";
+  /* localStorage pode falhar (modo privado / cookies bloqueados) */
+  const storage = {
+    get: function (k) {
+      try {
+        return localStorage.getItem(k);
+      } catch (e) {
+        return null;
+      }
+    },
+    set: function (k, v) {
+      try {
+        localStorage.setItem(k, v);
+      } catch (e) {}
+    },
+    del: function (k) {
+      try {
+        localStorage.removeItem(k);
+      } catch (e) {}
+    },
+  };
+
+  let token = storage.get(K_TOKEN) || "";
   let tab = "sabores";
   let publishing = false;
   let logLines = [];
@@ -51,7 +72,7 @@
 
   /* tenta recuperar rascunho salvo neste navegador */
   try {
-    const raw = localStorage.getItem(K_DRAFT);
+    const raw = storage.get(K_DRAFT);
     if (raw) {
       const dr = JSON.parse(raw);
       if (dr && dr.d && dr.d.brand) {
@@ -74,7 +95,11 @@
   function setPath(path, val) {
     const parts = String(path).split(".");
     let o = D;
-    for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]];
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (o == null || typeof o !== "object") return;
+      o = o[parts[i]];
+    }
+    if (o == null || typeof o !== "object") return;
     o[parts[parts.length - 1]] = val;
   }
 
@@ -89,16 +114,14 @@
     clearTimeout(draftTimer);
     draftTimer = setTimeout(function () {
       draftAt = Date.now();
-      try {
-        localStorage.setItem(K_DRAFT, JSON.stringify({ d: D, at: draftAt }));
-      } catch (e) {}
+      storage.set(K_DRAFT, JSON.stringify({ d: D, at: draftAt }));
       updateDirty();
     }, 350);
   }
 
   function clearDraft() {
     clearTimeout(draftTimer);
-    localStorage.removeItem(K_DRAFT);
+    storage.del(K_DRAFT);
     draftAt = null;
     updateDirty();
   }
@@ -857,17 +880,21 @@
           reject(new Error("Imagem inválida."));
         };
         img.onload = function () {
-          const maxDim = 1600;
-          let w = img.naturalWidth;
-          let h = img.naturalHeight;
-          const scale = Math.min(1, maxDim / Math.max(w, h));
-          w = Math.max(1, Math.round(w * scale));
-          h = Math.max(1, Math.round(h * scale));
-          const cv = document.createElement("canvas");
-          cv.width = w;
-          cv.height = h;
-          cv.getContext("2d").drawImage(img, 0, 0, w, h);
-          resolve(cv.toDataURL("image/jpeg", 0.85));
+          try {
+            const maxDim = 1600;
+            let w = img.naturalWidth;
+            let h = img.naturalHeight;
+            const scale = Math.min(1, maxDim / Math.max(w, h));
+            w = Math.max(1, Math.round(w * scale));
+            h = Math.max(1, Math.round(h * scale));
+            const cv = document.createElement("canvas");
+            cv.width = w;
+            cv.height = h;
+            cv.getContext("2d").drawImage(img, 0, 0, w, h);
+            resolve(cv.toDataURL("image/jpeg", 0.85));
+          } catch (e) {
+            reject(e instanceof Error ? e : new Error("Não consegui processar a imagem."));
+          }
         };
         img.src = fr.result;
       };
@@ -990,8 +1017,10 @@
       case "add-flavor": {
         const cat = getByPath(path);
         cat.flavors = cat.flavors || [];
-        const f = { name: "", desc: "" };
-        if (path !== "calzones") f.n = "";
+        const f =
+          path === "calzones"
+            ? { name: "", desc: "" }
+            : { n: "", name: "", desc: "" };
         cat.flavors.push(f);
         break;
       }
@@ -1082,18 +1111,18 @@
         const t = $("#aToken");
         token = t ? t.value.trim() : "";
         if (token) {
-          localStorage.setItem(K_TOKEN, token);
+          storage.set(K_TOKEN, token);
           toast("Token salvo neste navegador.");
           log("ok", "Token salvo.");
         } else {
-          localStorage.removeItem(K_TOKEN);
+          storage.del(K_TOKEN);
           toast("Campo vazio — nenhum token salvo.", true);
         }
         return;
       }
       case "clear-token":
         token = "";
-        localStorage.removeItem(K_TOKEN);
+        storage.del(K_TOKEN);
         toast("Token removido.");
         render();
         return;

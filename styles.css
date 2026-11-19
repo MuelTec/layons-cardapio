@@ -603,7 +603,7 @@ main {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 0.82rem;
-  color: var(--red);
+  color: #ff8f80; /* vermelho claro p/ contraste AA sobre o fundo escuro */
   background: rgba(232, 64, 47, 0.14);
   border: 1px solid rgba(232, 64, 47, 0.4);
   border-radius: 8px;
@@ -1010,7 +1010,7 @@ main {
 
 .footer-note {
   width: 100%;
-  color: rgba(191, 175, 159, 0.6);
+  color: rgba(191, 175, 159, 0.8);
   font-size: 0.76rem;
   text-align: center;
   margin-top: 6px;

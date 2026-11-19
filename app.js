@@ -5,19 +5,26 @@
 (function () {
   "use strict";
 
-  const B = MENU.brand;
+  const B = MENU.brand || {};
   const $ = (sel, ctx) => (ctx || document).querySelector(sel);
   const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
 
   const esc = (s) =>
-    String(s)
+    String(s == null ? "" : s)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
 
-  const brl = (v) =>
-    "R$ " + Number(v).toFixed(2).replace(".", ",");
+  const brl = (v) => {
+    const n = Number(v);
+    return isFinite(n) ? "R$ " + n.toFixed(2).replace(".", ",") : "—";
+  };
+
+  /* só aceita URLs de contato http(s) — evita javascript: e links quebrados */
+  const safeUrl = (u, hostRe) =>
+    hostRe.test(String(u == null ? "" : u).trim()) ? String(u).trim() : "#";
 
   const normalize = (s) =>
     String(s)
@@ -116,6 +123,7 @@
   function bindCopy(btn, getText) {
     if (!btn) return;
     btn.addEventListener("click", () => {
+      if (btn.classList.contains("is-copied")) return;
       const text = getText();
       if (!text) return;
       copyText(text);
@@ -159,13 +167,14 @@
      Faixa de preços (clicável: já abre o montador com o tamanho)
      ------------------------------------------------------------ */
   function pricesHTML(prices, small, cat) {
+    prices = prices || {};
     return (
       '<div class="prices' +
       (small ? " prices--sm" : "") +
       '">' +
-      MENU.sizes
+      (MENU.sizes || [])
         .map((s) => {
-          const inner = "<i>" + s.key + "</i><b>" + brl(prices[s.key]) + "</b>";
+          const inner = "<i>" + esc(s.key) + "</i> <b>" + brl(prices[s.key]) + "</b>";
           if (!cat) {
             return (
               '<span class="price" title="' + esc(s.label) + '">' + inner + "</span>"
@@ -173,19 +182,21 @@
           }
           return (
             '<button type="button" class="price price--btn" data-size="' +
-            s.key +
+            esc(s.key) +
             '" data-cat="' +
             esc(cat.id) +
             '" title="Montar ' +
             esc(cat.title) +
             " — tamanho " +
             esc(s.label) +
-            '" aria-label="Montar ' +
+            '" aria-label="' +
+            esc(s.key) +
+            " " +
+            brl(prices[s.key]) +
+            " — montar " +
             esc(cat.title) +
             " tamanho " +
             esc(s.label) +
-            ", " +
-            brl(prices[s.key]) +
             '">' +
             inner +
             "</button>"
@@ -254,7 +265,7 @@
       inner += '<div class="grid">' + flavors.map(flavorHTML).join("") + "</div>";
     }
 
-    if (cat.comingSoon) {
+    if (cat.comingSoon && !flavors.length) {
       inner +=
         '<div class="grid"><div class="coming-soon" data-search="' +
         esc(normalize(cat.comingSoon.title + " " + cat.comingSoon.text)) +
@@ -265,13 +276,13 @@
         "</h3><p>" +
         esc(cat.comingSoon.text) +
         '</p><a href="' +
-        B.whatsappUrl +
+        esc(B.whatsappUrl) +
         '" target="_blank" rel="noopener">Perguntar pelos sabores →</a></div></div>';
     }
 
     return (
       '<section class="sec" id="' +
-      cat.id +
+      esc(cat.id) +
       '"' +
       (opts.pageBreak ? ' data-break="page"' : "") +
       '><div class="container">' +
@@ -284,9 +295,9 @@
      Bordas + Aperitivos
      ------------------------------------------------------------ */
   function bordasHTML() {
-    const cards = MENU.bordas
+    const cards = (MENU.bordas || [])
       .map((g) => {
-        const search = normalize(g.title + " " + g.flavors.join(" "));
+        const search = normalize(g.title + " " + (g.flavors || []).join(" "));
         return (
           '<div class="panel-card" data-search="' +
           esc(search) +
@@ -294,18 +305,18 @@
           esc(g.title) +
           '</h3><p class="panel-sub">Recheio que vira o ponto alto da pizza</p>' +
           '<div class="ing-list">' +
-          g.flavors.map((f) => '<span class="ing">' + esc(f) + "</span>").join("") +
+          (g.flavors || []).map((f) => '<span class="ing">' + esc(f) + "</span>").join("") +
           "</div>" +
           '<table class="size-table"><thead><tr>' +
-          MENU.sizes.map((s) => "<th>" + s.key + "</th>").join("") +
+          (MENU.sizes || []).map((s) => "<th>" + esc(s.key) + "</th>").join("") +
           "</tr></thead><tbody><tr>" +
-          MENU.sizes.map((s) => "<td>" + brl(g.prices[s.key]) + "</td>").join("") +
+          (MENU.sizes || []).map((s) => "<td>" + brl(g.prices ? g.prices[s.key] : NaN) + "</td>").join("") +
           "</tr></tbody></table></div>"
         );
       })
       .join("");
 
-    const aperis = MENU.aperitivos
+    const aperis = (MENU.aperitivos || [])
       .map(
         (a) =>
           '<div class="aperi-row" data-search="' +
@@ -342,7 +353,7 @@
   function drinkGroupHTML(g) {
     const icon = ICONS[DRINK_ICON[g.id]] || ICONS.bottle;
     const search = normalize(
-      g.title + " " + (g.note || "") + " " + g.rows.map((r) => r.name + " " + r.size).join(" ")
+      g.title + " " + (g.note || "") + " " + (g.rows || []).map((r) => r.name + " " + r.size).join(" ")
     );
     return (
       '<div class="drink-group" data-search="' +
@@ -352,7 +363,7 @@
       esc(g.title) +
       "</h3>" +
       (g.note ? '<p class="drink-note">' + esc(g.note) + "</p>" : "") +
-      g.rows
+      (g.rows || [])
         .map(
           (r) =>
             '<div class="row"><span class="nm">' +
@@ -374,24 +385,28 @@
       '<span class="sec-eyebrow">Tudo gelado</span>' +
       "<h2>Bebidas</h2></div></header>" +
       '<div class="duo">' +
-      MENU.drinks.map(drinkGroupHTML).join("") +
+      (MENU.drinks || []).map(drinkGroupHTML).join("") +
       "</div></div></section>"
     );
   }
 
   function cervejasHTML() {
-    const b = MENU.beers;
-    const search = normalize(b.title + " " + b.rows.map((r) => r.name + " " + r.size).join(" "));
+    const b = MENU.beers || { title: "Cervejas", rows: [] };
+    const rows = b.rows || [];
+    const search = normalize(b.title + " " + rows.map((r) => r.name + " " + r.size).join(" "));
     return (
       '<section class="sec" id="cervejas"><div class="container">' +
+      '<header class="sec-head"><div class="sec-title">' +
+      '<span class="sec-eyebrow">Para acompanhar a pizza</span>' +
+      "<h2>" +
+      esc(b.title) +
+      "</h2></div></header>" +
       '<div class="duo"><div class="drink-group" data-search="' +
       esc(search) +
       '"><h3>' +
       ICONS.mug +
-      esc(b.title) +
-      "</h3>" +
-      '<p class="drink-note">Para acompanhar a pizza</p>' +
-      b.rows
+      "Latas, long necks e garrafas</h3>" +
+      rows
         .map(
           (r) =>
             '<div class="row"><span class="nm">' +
@@ -472,25 +487,29 @@
           (i === 0 ? " is-on" : "") +
           '" data-step="' +
           (i + 1) +
-          '" aria-label="Etapa ' +
+          '" aria-label="' +
           (i + 1) +
-          ": " +
+          " " +
           t +
+          " — etapa " +
+          (i + 1) +
+          " de " +
+          steps.length +
           '"><b>' +
           (i + 1) +
-          "</b><span>" +
+          "</b> <span>" +
           t +
           "</span></button>"
       )
       .join("");
 
-    const sizes = MENU.sizes
+    const sizes = (MENU.sizes || [])
       .map(
         (s) =>
           '<button type="button" class="m-size" data-size="' +
-          s.key +
+          esc(s.key) +
           '" aria-pressed="false"><b>' +
-          s.key +
+          esc(s.key) +
           "</b><span>" +
           s.label +
           "</span></button>"
@@ -595,21 +614,25 @@
   };
 
   function render() {
-    /* links de contato */
+    /* links de contato — só URLs http(s) válidas */
+    const waUrl = safeUrl(B.whatsappUrl, /^https:\/\/(wa\.me|api\.whatsapp\.com)\//i);
+    const igUrl = safeUrl(B.instagramUrl, /^https:\/\/(www\.)?instagram\.com\//i);
     ["heroWhats", "ctaWhats", "fabWhats", "footWhats"].forEach((id) => {
       const el = document.getElementById(id);
-      if (el) el.href = B.whatsappUrl;
+      if (el) el.href = waUrl;
     });
     ["heroInsta", "footInsta"].forEach((id) => {
       const el = document.getElementById(id);
-      if (el) el.href = B.instagramUrl;
+      if (el) el.href = igUrl;
     });
     ["heroPhone", "footPhone"].forEach((id) => {
       const el = document.getElementById(id);
-      if (el) el.textContent = B.phone;
+      if (el) el.textContent = B.phone || "";
     });
-    $("#footName").textContent = B.name;
-    $("#footYear").textContent = B.year;
+    const footName = $("#footName");
+    if (footName) footName.textContent = B.name || "";
+    const footYear = $("#footYear");
+    if (footYear) footYear.textContent = B.year || "";
 
     /* faixa rolante */
     const ribbonItems = [
@@ -618,46 +641,56 @@
       "Bordas recheadas",
       "Pizzas doces",
       "Bebidas geladas",
-      B.cards,
+      B.cards || "",
     ];
     const seq = ribbonItems.map((t) => "<span>" + esc(t) + " ·</span>").join("");
-    $("#ribbonTrack").innerHTML = seq + seq;
+    const ribbonTrack = $("#ribbonTrack");
+    if (ribbonTrack) ribbonTrack.innerHTML = seq + seq;
 
     /* mais pedidas */
-    $("#moList").innerHTML = MENU.mostOrdered
-      .map((m) => {
-        const cat = MENU.pizzas.find((p) => p.id === m.category);
-        const from = cat ? cat.prices.P : null;
-        return (
-          '<a class="mo-chip" href="#' +
-          esc(m.category) +
-          '"><b>' +
-          esc(m.flavor) +
-          "</b>" +
-          esc(m.name) +
-          (from ? "<span>a partir de " + brl(from) + "</span>" : "") +
-          "</a>"
-        );
-      })
-      .join("");
+    const moList = $("#moList");
+    if (moList) {
+      moList.innerHTML = (MENU.mostOrdered || [])
+        .map((m) => {
+          const cat = (MENU.pizzas || []).find((p) => p.id === m.category);
+          const from = cat && cat.prices ? cat.prices.P : null;
+          return (
+            '<a class="mo-chip" href="' +
+            (cat ? "#" + esc(m.category) : "#cardapio") +
+            '"><b>' +
+            esc(m.flavor) +
+            "</b>" +
+            esc(m.name) +
+            (from ? "<span>a partir de " + brl(from) + "</span>" : "") +
+            "</a>"
+          );
+        })
+        .join("");
+    }
 
     /* chips de navegação */
-    $("#chips").innerHTML = CHIPS.map(
-      (c) => '<a class="chip" href="#' + c.id + '" data-chip="' + c.id + '">' + esc(c.label) + "</a>"
-    ).join("");
+    const chipsEl = $("#chips");
+    if (chipsEl) {
+      chipsEl.innerHTML = CHIPS.map(
+        (c) => '<a class="chip" href="#' + esc(c.id) + '" data-chip="' + esc(c.id) + '">' + esc(c.label) + "</a>"
+      ).join("");
+    }
 
     /* seções */
-    let html = montarHTML();
-    html += menuSection(MENU.calzones, {});
-    MENU.pizzas.forEach((cat) => {
-      html += menuSection(cat, { pageBreak: !!PAGE_BREAKS[cat.id] });
-    });
-    html += bordasHTML();
-    html += bebidasHTML();
-    html += cervejasHTML();
-    html += pixSectionHTML();
-    html += galleryHTML();
-    $("#sections").innerHTML = html;
+    const sectionsEl = $("#sections");
+    if (sectionsEl) {
+      let html = montarHTML();
+      if (MENU.calzones) html += menuSection(MENU.calzones, {});
+      (MENU.pizzas || []).forEach((cat) => {
+        html += menuSection(cat, { pageBreak: !!PAGE_BREAKS[cat.id] });
+      });
+      html += bordasHTML();
+      html += bebidasHTML();
+      html += cervejasHTML();
+      html += pixSectionHTML();
+      html += galleryHTML();
+      sectionsEl.innerHTML = html;
+    }
 
     /* atalho: clicar num tamanho do card já abre o montador */
     $$("#sections .price--btn").forEach((b) => {
@@ -861,7 +894,7 @@
     const miniEl = $("#mMini", sec);
 
     const sizeLabel = (k) => {
-      const s = MENU.sizes.find((x) => x.key === k);
+      const s = (MENU.sizes || []).find((x) => x.key === k);
       return s ? s.label + " (" + k + ")" : k;
     };
 
@@ -879,11 +912,11 @@
     const bordaInfo = () => {
       if (state.type !== "pizza" || !state.borda || !state.size) return null;
       const parts = state.borda.split(".");
-      const g = MENU.bordas[Number(parts[0])];
+      const g = (MENU.bordas || [])[Number(parts[0])];
       if (!g) return null;
-      const name = g.flavors[Number(parts[1])];
+      const name = (g.flavors || [])[Number(parts[1])];
       if (name == null) return null;
-      return { name: name, price: Number(g.prices[state.size] || 0) };
+      return { name: name, price: Number((g.prices ? g.prices[state.size] : 0) || 0) };
     };
 
     /* --- lista de sabores (com filtro) --- */
@@ -1388,9 +1421,19 @@
     updateNav();
   }
 
-  /* ------------------------------------------------------------ */
-  render();
-  setupSearch();
-  setupBuilder();
-  setupSpy();
+  /* ------------------------------------------------------------
+     Início — cada etapa isolada: um erro não derruba as demais
+     ------------------------------------------------------------ */
+  function boot(fn, label) {
+    try {
+      fn();
+    } catch (e) {
+      console.error("Falha ao iniciar " + label + ":", e);
+    }
+  }
+
+  boot(render, "a renderização do cardápio");
+  boot(setupSearch, "a busca");
+  boot(setupBuilder, "o montador");
+  boot(setupSpy, "a navegação");
 })();
