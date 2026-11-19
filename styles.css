@@ -983,6 +983,38 @@ main {
   text-decoration: underline;
 }
 
+.footer-links button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--gold);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.footer-links button:hover {
+  text-decoration: underline;
+}
+
+/* faixa de "preview do rascunho" (?preview=1) */
+.preview-flag {
+  position: fixed;
+  left: 16px;
+  bottom: 18px;
+  z-index: 60;
+  max-width: calc(100vw - 110px);
+  background: var(--gold);
+  color: #241609;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 9px 16px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
 .footer-cards {
   display: inline-flex;
   align-items: center;

@@ -107,6 +107,7 @@ const MENU = {
     "eyebrow": "Recheio generoso",
     "title": "Calzones",
     "img": "img/calzone-fatiado.jpg",
+    "imgAlt": "Calzone fatiado, recheio generoso",
     "prices": {
       "P": 25,
       "M": 29,
@@ -194,6 +195,7 @@ const MENU = {
       "eyebrow": "Clássicas da casa",
       "title": "Pizzas Simples",
       "img": "img/pizza-1.jpg",
+      "imgAlt": "Pizza artesanal com muçarela, tomate e bacon",
       "prices": {
         "P": 39,
         "M": 48,
@@ -288,6 +290,7 @@ const MENU = {
       "eyebrow": "Sempre bem pedidas",
       "title": "Pizzas Tradicionais",
       "img": "img/pizza-2.jpg",
+      "imgAlt": "Pizza com molho branco e tomate",
       "prices": {
         "P": 41,
         "M": 50,
@@ -362,6 +365,7 @@ const MENU = {
       "eyebrow": "Sabor de outro nível",
       "title": "Pizzas Especiais",
       "img": "img/pizza-3.jpg",
+      "imgAlt": "Pizza assada na hora com calabresa e tomate",
       "prices": {
         "P": 43,
         "M": 57,
@@ -446,6 +450,7 @@ const MENU = {
       "eyebrow": "Ingredientes selecionados",
       "title": "Pizzas Premium",
       "img": "img/pizza-4.jpg",
+      "imgAlt": "Pizza com frango, tomate e azeitona",
       "prices": {
         "P": 47,
         "M": 61,
@@ -520,6 +525,7 @@ const MENU = {
       "eyebrow": "Novidade",
       "title": "Pizzas Premium Especiais",
       "img": "img/pizza-6.jpg",
+      "imgAlt": "Pizza artesanal saindo do forno",
       "prices": {
         "P": 55,
         "M": 65,
@@ -537,6 +543,7 @@ const MENU = {
       "eyebrow": "Para fechar com doçura",
       "title": "Pizzas Doces",
       "img": "img/pizza-doce.jpg",
+      "imgAlt": "Pizza doce com chocolate e frutas",
       "prices": {
         "P": 39,
         "M": 48,
@@ -828,5 +835,10 @@ const MENU = {
         "price": 5
       }
     ]
+  },
+  "sectionPhotos": {
+    "bordas": {},
+    "bebidas": {},
+    "cervejas": {}
   }
 };

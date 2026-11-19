@@ -592,6 +592,39 @@ body {
   flex: 0 0 34px;
 }
 
+/* selo "já usada em" + seletor "usar nesta seção" */
+.a-tag--used {
+  align-self: flex-start;
+  color: #241609;
+  background: rgba(243, 176, 74, 0.9);
+  border-color: transparent;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.72rem;
+}
+
+.a-galuse-row {
+  display: flex;
+  gap: 6px;
+}
+
+.a-galuse {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 7px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  outline: none;
+}
+
+.a-galuse:focus {
+  border-color: rgba(243, 176, 74, 0.6);
+}
+
 .a-upload {
   display: flex;
   align-items: center;

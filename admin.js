@@ -84,6 +84,22 @@
     /* rascunho corrompido — segue com o publicado */
   }
 
+  /* fotos das seções fixas (bordas, bebidas, cervejas) — garante a
+     estrutura mesmo em rascunhos antigos sem o campo */
+  function ensureSectionPhotos(obj) {
+    if (!obj || typeof obj !== "object") return;
+    if (!obj.sectionPhotos || typeof obj.sectionPhotos !== "object") {
+      obj.sectionPhotos = {};
+    }
+    ["bordas", "bebidas", "cervejas"].forEach(function (k) {
+      if (!obj.sectionPhotos[k] || typeof obj.sectionPhotos[k] !== "object") {
+        obj.sectionPhotos[k] = {};
+      }
+    });
+  }
+  ensureSectionPhotos(BASE);
+  ensureSectionPhotos(D);
+
   /* ---------------- caminhos (data-path) ---------------- */
 
   function getByPath(path) {
@@ -233,22 +249,65 @@
     return list;
   }
 
-  /* foto de capa de uma seção (sabores / calzones) */
-  function catPhotoHTML(path, cat, withTitle) {
+  /* todos os destinos que podem receber uma foto de seção
+     (sabores/calzones + as seções fixas bordas, bebidas e cervejas) */
+  function sectionTargets() {
+    const sp = D.sectionPhotos || {};
+    return cats()
+      .map(function (c) {
+        return { path: c.path, label: c.cat.title || c.cat.id, img: c.cat.img || "" };
+      })
+      .concat([
+        { path: "sectionPhotos.bordas", label: "Bordas & Aperitivos", img: (sp.bordas || {}).img || "" },
+        { path: "sectionPhotos.bebidas", label: "Bebidas", img: (sp.bebidas || {}).img || "" },
+        { path: "sectionPhotos.cervejas", label: "Cervejas", img: (sp.cervejas || {}).img || "" },
+      ]);
+  }
+
+  /* enquadramento da foto (object-position) */
+  const PHOTO_POS = [
+    ["", "Centro (padrão)"],
+    ["center top", "Topo"],
+    ["center bottom", "Base"],
+    ["left center", "Esquerda"],
+    ["right center", "Direita"],
+  ];
+
+  function posField(path, val) {
+    return (
+      '<label class="a-field"><span>Enquadramento da foto</span><select data-path="' +
+      esc(path) +
+      '.imgPos">' +
+      PHOTO_POS.map(function (p) {
+        return (
+          '<option value="' + p[0] + '"' + (val === p[0] ? " selected" : "") + ">" + p[1] + "</option>"
+        );
+      }).join("") +
+      "</select></label>"
+    );
+  }
+
+  /* foto de capa de uma seção (sabores / calzones / bordas / bebidas) */
+  function catPhotoHTML(path, cat, label) {
+    cat = cat || {};
     const img = cat.img || "";
     let h =
       '<div class="a-catphoto">' +
       "<strong>" +
-      (withTitle ? esc(cat.title || cat.id) : "Foto da seção") +
+      (label ? esc(label) : "Foto da seção") +
       "</strong>" +
       '<p class="a-sub">Banner exibido no topo da seção no site. Opcional.</p>';
     if (img) {
       h +=
         '<img src="' +
         esc(img) +
-        '" alt="Foto de ' +
-        esc(cat.title || cat.id) +
-        '" style="width:100%;max-width:340px;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:#000">';
+        '" alt="' +
+        esc(cat.imgAlt || label || "Foto da seção") +
+        '" style="width:100%;max-width:340px;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:#000">' +
+        '<div class="a-grid">' +
+        field("Descrição da foto (alt)", path + ".imgAlt", cat.imgAlt || "", { area: true }) +
+        posField(path, cat.imgPos || "") +
+        "</div>";
     } else {
       h += '<p class="a-empty">Nenhuma foto nesta seção.</p>';
     }
@@ -418,7 +477,7 @@
         field("Sobretítulo", path + ".eyebrow", cat.eyebrow) +
         "</div>";
 
-      html += catPhotoHTML(path, cat, false);
+      html += catPhotoHTML(path, cat);
 
       html += priceGrid(path, cat.prices, sizes);
 
@@ -478,6 +537,14 @@
       "Grupos de refrigerantes, águas, sucos, energéticos e a lista de cervejas. Itens com preço em R$."
     );
 
+    /* fotos das seções Bebidas e Cervejas */
+    html +=
+      '<div class="a-card"><h2>Fotos das seções</h2>' +
+      '<p class="a-sub">Banner no topo das seções Bebidas e Cervejas no site.</p>' +
+      catPhotoHTML("sectionPhotos.bebidas", D.sectionPhotos.bebidas, "Bebidas") +
+      catPhotoHTML("sectionPhotos.cervejas", D.sectionPhotos.cervejas, "Cervejas") +
+      "</div>";
+
     D.drinks.forEach(function (g, gi) {
       const p = "drinks." + gi;
       html +=
@@ -525,6 +592,13 @@
       "Bordas e aperitivos",
       "Bordas recheadas por grupo (sabores e preço por tamanho) e a lista de aperitivos."
     );
+
+    /* foto da seção Bordas & Aperitivos */
+    html +=
+      '<div class="a-card"><h2>Foto da seção</h2>' +
+      '<p class="a-sub">Banner no topo da seção Bordas &amp; Aperitivos no site.</p>' +
+      catPhotoHTML("sectionPhotos.bordas", D.sectionPhotos.bordas, "Bordas & Aperitivos") +
+      "</div>";
 
     D.bordas.forEach(function (b, i) {
       const p = "bordas." + i;
@@ -633,13 +707,17 @@
     /* fotos das seções */
     html +=
       '<div class="a-card"><h2>Fotos das seções <span class="a-count">' +
-      cats().length +
+      (cats().length + 3) +
       " seções</span></h2>" +
-      '<p class="a-sub">Uma foto por seção (calzones e categorias de pizza) — aparece no topo de cada seção no site.</p>';
+      '<p class="a-sub">Uma foto por seção (calzones, categorias de pizza, bordas, bebidas e cervejas) — aparece no topo de cada seção no site. Na galeria, fotos já usadas aparecem com o selo “já usada em”.</p>';
     cats().forEach(function (entry) {
-      html += catPhotoHTML(entry.path, entry.cat, true);
+      html += catPhotoHTML(entry.path, entry.cat, entry.cat.title || entry.cat.id);
     });
-    html += "</div>";
+    html +=
+      catPhotoHTML("sectionPhotos.bordas", D.sectionPhotos.bordas, "Bordas & Aperitivos") +
+      catPhotoHTML("sectionPhotos.bebidas", D.sectionPhotos.bebidas, "Bebidas") +
+      catPhotoHTML("sectionPhotos.cervejas", D.sectionPhotos.cervejas, "Cervejas") +
+      "</div>";
 
     /* galeria */
     html +=
@@ -650,12 +728,46 @@
       "<p>Envia para <code>img/</code> e adiciona na galeria. É preciso ter o token salvo na aba Publicar. Fotos novas ficam no fim — use ← → para reordenar.</p></div>";
 
     if (!D.gallery.length) html += '<p class="a-empty">Nenhuma foto na galeria.</p>';
+    const targets = sectionTargets();
+    const usedBy = {};
+    targets.forEach(function (t) {
+      if (t.img) (usedBy[t.img] = usedBy[t.img] || []).push(t.label);
+    });
     html += '<div class="a-gal">';
     D.gallery.forEach(function (g, i) {
+      const uses = usedBy[g.src] || [];
+      const opts =
+        '<option value="">Usar nesta seção…</option>' +
+        targets
+          .map(function (t) {
+            const already = t.img === g.src;
+            return (
+              '<option value="' +
+              esc(t.path) +
+              '"' +
+              (already ? " disabled" : "") +
+              ">" +
+              (already ? "✓ " : "") +
+              esc(t.label) +
+              "</option>"
+            );
+          })
+          .join("");
       html +=
         '<div class="a-shot"><img src="' + esc(g.src) + '" alt="' + esc(g.alt || "") + '">' +
         '<div class="a-shot-body">' +
         '<input type="text" data-path="gallery.' + i + '.alt" value="' + esc(g.alt || "") + '" placeholder="Descrição da foto">' +
+        (uses.length
+          ? '<span class="a-tag a-tag--used">Já usada em ' + esc(uses.join(", ")) + "</span>"
+          : "") +
+        '<div class="a-galuse-row">' +
+        '<select class="a-galuse" aria-label="Seção onde usar esta foto">' +
+        opts +
+        "</select>" +
+        '<button type="button" class="a-btn a-btn--sm" data-act="gal-use" data-i="' +
+        i +
+        '">Usar</button>' +
+        "</div>" +
         '<div class="a-shot-ctrl">' +
         '<button type="button" data-act="gal-move" data-i="' + i + '" data-dir="-1" title="Mover para a esquerda">←</button>' +
         '<button type="button" data-act="gal-move" data-i="' + i + '" data-dir="1" title="Mover para a direita">→</button>' +
@@ -948,8 +1060,14 @@
           name = "hero-pizza.jpg";
         } else if (kind.indexOf("cat:") === 0) {
           const cp = kind.slice(4);
-          const c = getByPath(cp) || {};
-          name = "cat-" + slug(c.id || cp.replace(/\./g, "-")) + ".jpg";
+          let base;
+          if (cp.indexOf("sectionPhotos.") === 0) {
+            base = cp.slice("sectionPhotos.".length);
+          } else {
+            const c = getByPath(cp) || {};
+            base = c.id || cp.replace(/\./g, "-");
+          }
+          name = "cat-" + slug(base) + ".jpg";
         } else {
           const base = slug(String(f.name).replace(/\.[^.]+$/, ""));
           name = base + ".jpg";
@@ -1037,9 +1155,15 @@
       case "rm-aviso":
         delete getByPath(path).comingSoon;
         break;
-      case "rm-catimg":
-        delete getByPath(path).img;
+      case "rm-catimg": {
+        const o = getByPath(path);
+        if (o) {
+          delete o.img;
+          delete o.imgAlt;
+          delete o.imgPos;
+        }
         break;
+      }
       case "add-row":
         getByPath(path).push({ name: "", size: "", price: 0 });
         break;
@@ -1107,6 +1231,23 @@
       case "gal-del":
         D.gallery.splice(i, 1);
         break;
+      case "gal-use": {
+        /* reaproveita uma foto da galeria como foto de seção (sem upload) */
+        const sel = btn.parentElement.querySelector("select.a-galuse");
+        const target = sel ? sel.value : "";
+        if (!target) {
+          if (sel) sel.focus();
+          toast("Escolha uma seção para usar a foto.", true);
+          return;
+        }
+        const shot = D.gallery[i];
+        if (!shot) return;
+        setPath(target + ".img", shot.src);
+        if (shot.alt) setPath(target + ".imgAlt", shot.alt);
+        toast("Foto aplicada à seção ✓");
+        log("ok", "Foto da galeria aplicada em " + target);
+        break;
+      }
       case "save-token": {
         const t = $("#aToken");
         token = t ? t.value.trim() : "";
@@ -1160,7 +1301,10 @@
       const el = e.target;
       if (el.dataset.up && el.files && el.files.length) {
         handleFiles(el.files, el.dataset.up);
+        return;
       }
+      /* selects (enquadramento, categoria) também disparam change */
+      if (el.tagName === "SELECT" && el.dataset.path) onInput(e);
     });
 
     render();

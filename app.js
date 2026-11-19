@@ -5,6 +5,33 @@
 (function () {
   "use strict";
 
+  /* ------------------------------------------------------------
+     Preview do rascunho (?preview=1) — reaproveita o localStorage
+     do painel (admin.html) para mostrar o cardápio em edição
+     ------------------------------------------------------------ */
+  let PREVIEW = false;
+  try {
+    if (/[?&]preview=1(&|$)/.test(location.search)) {
+      const raw = localStorage.getItem("layons_draft");
+      if (raw) {
+        const dr = JSON.parse(raw);
+        if (dr && dr.d && dr.d.brand) {
+          Object.assign(MENU, dr.d);
+          PREVIEW = true;
+        }
+      }
+    }
+  } catch (e) {
+    /* sem rascunho ou armazenamento bloqueado — fica no publicado */
+  }
+
+  if (PREVIEW && document.body) {
+    const flag = document.createElement("div");
+    flag.className = "preview-flag no-print";
+    flag.textContent = "PREVIEW DO RASCUNHO — conteúdo ainda não publicado";
+    document.body.appendChild(flag);
+  }
+
   const B = MENU.brand || {};
   const $ = (sel, ctx) => (ctx || document).querySelector(sel);
   const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
@@ -230,6 +257,27 @@
   }
 
   /* ------------------------------------------------------------
+     Foto de seção — mesmo mecanismo para sabores, calzones,
+     bordas, bebidas e cervejas (editada no painel, aba Fotos)
+     ------------------------------------------------------------ */
+  function secPhotoHTML(img, title, alt, pos) {
+    if (!img) return "";
+    /* object-position só com caracteres seguros (sem ; ou ( ) */
+    const posOk = String(pos || "")
+      .trim()
+      .replace(/[^a-z0-9% .-]/gi, "");
+    return (
+      '<figure class="sec-photo"><img src="' +
+      esc(img) +
+      '" alt="' +
+      esc(alt || title || "") +
+      '"' +
+      (posOk ? ' style="object-position:' + esc(posOk) + '"' : "") +
+      ' loading="lazy"></figure>'
+    );
+  }
+
+  /* ------------------------------------------------------------
      Seções de pizza / calzone
      ------------------------------------------------------------ */
   function flavorHTML(f) {
@@ -252,14 +300,7 @@
     const flavors = cat.flavors || [];
     let inner = headHTML(cat, flavors.length);
 
-    if (cat.img) {
-      inner +=
-        '<figure class="sec-photo"><img src="' +
-        esc(cat.img) +
-        '" alt="' +
-        esc(cat.title || "") +
-        '" loading="lazy"></figure>';
-    }
+    inner += secPhotoHTML(cat.img, cat.title, cat.imgAlt || cat.title, cat.imgPos);
 
     if (flavors.length) {
       inner += '<div class="grid">' + flavors.map(flavorHTML).join("") + "</div>";
@@ -295,6 +336,7 @@
      Bordas + Aperitivos
      ------------------------------------------------------------ */
   function bordasHTML() {
+    const sp = ((MENU.sectionPhotos || {}).bordas) || {};
     const cards = (MENU.bordas || [])
       .map((g) => {
         const search = normalize(g.title + " " + (g.flavors || []).join(" "));
@@ -339,6 +381,7 @@
       '<header class="sec-head"><div class="sec-title">' +
       '<span class="sec-eyebrow">Complete sua pizza</span>' +
       "<h2>Bordas &amp; Aperitivos</h2></div></header>" +
+      secPhotoHTML(sp.img, "Bordas & Aperitivos", sp.imgAlt, sp.imgPos) +
       '<div class="trio">' +
       cards +
       "</div>" +
@@ -379,11 +422,13 @@
   }
 
   function bebidasHTML() {
+    const sp = ((MENU.sectionPhotos || {}).bebidas) || {};
     return (
       '<section class="sec" id="bebidas" data-break="page"><div class="container">' +
       '<header class="sec-head"><div class="sec-title">' +
       '<span class="sec-eyebrow">Tudo gelado</span>' +
       "<h2>Bebidas</h2></div></header>" +
+      secPhotoHTML(sp.img, "Bebidas", sp.imgAlt, sp.imgPos) +
       '<div class="duo">' +
       (MENU.drinks || []).map(drinkGroupHTML).join("") +
       "</div></div></section>"
@@ -393,6 +438,7 @@
   function cervejasHTML() {
     const b = MENU.beers || { title: "Cervejas", rows: [] };
     const rows = b.rows || [];
+    const sp = ((MENU.sectionPhotos || {}).cervejas) || {};
     const search = normalize(b.title + " " + rows.map((r) => r.name + " " + r.size).join(" "));
     return (
       '<section class="sec" id="cervejas"><div class="container">' +
@@ -401,6 +447,7 @@
       "<h2>" +
       esc(b.title) +
       "</h2></div></header>" +
+      secPhotoHTML(sp.img, b.title, sp.imgAlt, sp.imgPos) +
       '<div class="duo"><div class="drink-group" data-search="' +
       esc(search) +
       '"><h3>' +
@@ -1436,4 +1483,29 @@
   boot(setupSearch, "a busca");
   boot(setupBuilder, "o montador");
   boot(setupSpy, "a navegação");
+
+  /* impressão / PDF: garante que as fotos lazy já estejam carregadas */
+  function eagerPhotos() {
+    const imgs = $$("img[loading='lazy']");
+    imgs.forEach((im) => {
+      im.loading = "eager";
+    });
+    return Promise.all(
+      imgs.map((im) => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()))
+    );
+  }
+
+  boot(() => {
+    const btn = $("#footPrint");
+    if (btn) {
+      btn.addEventListener("click", () => {
+        eagerPhotos().then(() => window.print());
+      });
+    }
+    window.addEventListener("beforeprint", () => {
+      $$("img[loading='lazy']").forEach((im) => {
+        im.loading = "eager";
+      });
+    });
+  }, "o botão de impressão");
 })();

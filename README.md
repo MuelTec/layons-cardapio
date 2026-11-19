@@ -12,6 +12,8 @@ Cardápio digital da **Layon's Pizzaria** — responsivo, com busca por sabor, p
 | `styles.css` | Estilos (tela + impressão/PDF) |
 | `menu-data.js` | **Todo o conteúdo do cardápio** (preços e sabores) |
 | `app.js` | Renderização, busca e navegação |
+| `admin.html` / `admin.js` / `admin.css` | **Painel do proprietário** — edita e publica o cardápio sem tocar em código |
+| `qrcode.js` | QR Code do Pix |
 | `img/` | Fotos, miniaturas e logos (extraídos do cardápio original) |
 | `cardapio-layons-2026.pdf` | Versão em PDF para imprimir/compartilhar |
 
@@ -21,14 +23,22 @@ Edite apenas o arquivo **`menu-data.js`** — não é preciso mexer em mais nada
 
 - **Preços de pizzas/calzones:** cada categoria tem um objeto `prices: { P, M, G, GG }`
 - **Sabores:** cada categoria tem a lista `flavors: [{ n, name, desc }]`
-- **Foto da seção:** cada categoria aceita `img` (ex.: `"img/pizza-1.jpg"`) — banner no topo da seção; troque pela aba **Sabores** ou **Fotos** do painel (`admin.html`)
+- **Foto da seção:** cada categoria aceita `img` + `imgAlt` (descrição para leitores de tela) + `imgPos` (enquadramento) — banner no topo da seção. Bordas, Bebidas e Cervejas usam o mesmo mecanismo em `MENU.sectionPhotos`. Troque pelas abas **Sabores**, **Fotos**, **Bebidas** ou **Bordas** do painel (`admin.html`)
 - **Bebidas / cervejas / bordas:** listas `MENU.drinks`, `MENU.beers`, `MENU.bordas`
 - **Fotos da galeria:** lista `MENU.gallery` (`src` + `alt`)
 - **Contato:** objeto `MENU.brand` (WhatsApp, Instagram, telefone)
 
 Depois é só salvar e fazer o push — o site atualiza sozinho.
 
-## 🖨️ Gerar o PDF novamente
+## 👁️ Ver o rascunho antes de publicar
+
+O botão **“Ver site ↗”** do painel abre o site em `?preview=1`: ele lê o rascunho salvo neste navegador e mostra o cardápio **como ficaria** após publicar, com a faixa “PREVIEW DO RASCUNHO” no canto. Sem rascunho, mostra o conteúdo publicado.
+
+## 🖨️ Imprimir / baixar o PDF
+
+No rodapé do site estão **“Imprimir”** (abre a impressão do navegador — é assim que o PDF é gerado) e **“Baixar PDF”** (a versão pronta `cardapio-layons-2026.pdf`). As fotos são carregadas antes de imprimir para não sair em branco.
+
+## 🛠️ Gerar o PDF novamente
 
 O PDF é gerado a partir do site (Chrome/Edge em modo headless):
 
