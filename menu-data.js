@@ -15,7 +15,7 @@ const MENU = {
     "phone": "(99) 99162-0986",
     "whatsappUrl": "https://wa.me/5599991620986?text=Ol%C3%A1!%20Vim%20pelo%20card%C3%A1pio%20digital%20da%20Layon's%20Pizzaria%20%F0%9F%8D%95",
     "cards": "Aceitamos os cartões",
-    "pixKey": "5599984568529",
+    "pixKey": "+5599984568529",
     "pixCity": "Imperatriz"
   },
   "sizes": [
