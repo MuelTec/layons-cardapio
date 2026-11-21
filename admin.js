@@ -817,6 +817,14 @@
       "</div></div>";
 
     html +=
+      '<div class="a-card"><h2>Endereço da pizzaria</h2>' +
+      '<p class="a-sub">Usado como origem da rota na seção “Acompanhe sua entrega” e exibido no rodapé.</p>' +
+      '<div class="a-grid">' +
+      field("Endereço", "brand.address", b.address || "") +
+      "</div>" +
+      '<p class="a-hint">Ex.: Avenida João Paulo II, Lote 01, Quadra 45 — Jardim das Oliveiras, Imperatriz - MA</p></div>';
+
+    html +=
       '<div class="a-card"><h2>WhatsApp</h2>' +
       '<p class="a-sub">Todos os botões “Peça pelo WhatsApp” abrem este link.</p>' +
       '<div class="a-grid">' +

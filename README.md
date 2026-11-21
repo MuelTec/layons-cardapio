@@ -26,9 +26,16 @@ Edite apenas o arquivo **`menu-data.js`** — não é preciso mexer em mais nada
 - **Foto da seção:** cada categoria aceita `img` + `imgAlt` (descrição para leitores de tela) + `imgPos` (enquadramento) — banner no topo da seção. Bordas, Bebidas e Cervejas usam o mesmo mecanismo em `MENU.sectionPhotos`. Troque pelas abas **Sabores**, **Fotos**, **Bebidas** ou **Bordas** do painel (`admin.html`)
 - **Bebidas / cervejas / bordas:** listas `MENU.drinks`, `MENU.beers`, `MENU.bordas`
 - **Fotos da galeria:** lista `MENU.gallery` (`src` + `alt`)
-- **Contato:** objeto `MENU.brand` (WhatsApp, Instagram, telefone)
+- **Contato:** objeto `MENU.brand` (WhatsApp, Instagram, telefone, `address` = endereço da pizzaria, usado na rota de entrega e no rodapé)
 
 Depois é só salvar e fazer o push — o site atualiza sozinho.
+
+## 🛵 Entrega e acompanhamento
+
+- **Endereço da pizzaria:** campo **Endereço** na aba *Contato* do painel (`brand.address`) — vira a origem do mapa/rota na seção **“Acompanhe sua entrega”** e aparece no rodapé.
+- **Endereço do cliente:** na etapa **Revisão** do montador, o cliente escolhe **Retirada** ou **Entrega** e informa rua/número/bairro/complemento. O endereço salva **no aparelho do cliente** (`localStorage`, sem login) e volta pré-preenchido no próximo pedido — dá para alterar ou apagar no mesmo lugar.
+- **Acompanhamento:** a seção **“Acompanhe sua entrega”** mostra o mapa da rota pizzaria → cliente (Google Maps embutido) com botões **Abrir no Google Maps** e **Abrir no Waze**. Quando a pizza sai para a entrega, o entregador compartilha a **localização ao vivo no WhatsApp** (recurso nativo do WhatsApp — é só abrir o link da conversa).
+- O endereço do cliente também entra na mensagem do pedido enviada pelo WhatsApp.
 
 ## 👁️ Ver o rascunho antes de publicar
 

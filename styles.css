@@ -1930,6 +1930,245 @@ main {
   justify-content: center;
 }
 
+/* --- rodapé: endereço da casa --- */
+.footer-brand .footer-addr {
+  display: block;
+  max-width: 38ch;
+}
+
+/* ------------------------------------------------------------
+   ACOMPANHAR ENTREGA
+   ------------------------------------------------------------ */
+.sec--track {
+  padding-top: 26px;
+}
+
+.track-hint {
+  max-width: 470px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.track-hint b {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.track-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 1fr);
+  gap: 26px;
+  padding: 26px;
+  border-radius: 24px;
+  background:
+    radial-gradient(600px 260px at 100% -20%, rgba(52, 120, 246, 0.16), transparent 65%),
+    linear-gradient(150deg, #221a15, #191310);
+  border: 1px solid rgba(52, 120, 246, 0.32);
+  box-shadow: var(--shadow);
+}
+
+.track-map {
+  min-height: 320px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+}
+
+.track-map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border: 0;
+}
+
+.track-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.track-addr {
+  padding: 12px 15px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+}
+
+.track-addr span {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.track-addr b {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.track-steps {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  display: grid;
+  gap: 8px;
+}
+
+.track-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.track-actions .btn {
+  justify-content: center;
+}
+
+/* ------------------------------------------------------------
+   ENTREGA OU RETIRADA — revisão do montador
+   ------------------------------------------------------------ */
+.m-addr {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+}
+
+.m-addr-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.m-addr-head b {
+  font-size: 0.95rem;
+}
+
+.m-addr-head small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.m-addr-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.m-addr-opt {
+  flex: 1 1 140px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.m-addr-opt:hover {
+  border-color: rgba(243, 176, 74, 0.5);
+  color: var(--ink);
+}
+
+.m-addr-opt.is-on {
+  border-color: rgba(243, 176, 74, 0.75);
+  background: rgba(243, 176, 74, 0.14);
+  color: var(--ink);
+}
+
+.m-addr-form {
+  margin-top: 14px;
+}
+
+.m-addr-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.m-af {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.m-af span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.m-af input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.m-af input:focus {
+  outline: none;
+  border-color: rgba(243, 176, 74, 0.6);
+}
+
+.m-addr-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.m-addr-clear {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--gold);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .track-card {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .track-map,
+  .track-map iframe {
+    min-height: 250px;
+  }
+
+  .track-actions {
+    margin-top: 0;
+  }
+
+  .m-addr-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* --- categoria em destaque na lista de sabores --- */
 .m-focus {
   margin: 10px 0 0;

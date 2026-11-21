@@ -60,6 +60,43 @@
       .toLowerCase();
 
   /* ------------------------------------------------------------
+     Endereço do cliente — salvo no aparelho (localStorage), sem login
+     ------------------------------------------------------------ */
+  const K_ADDR = "layons_customer";
+  const custAddr = {
+    get: function () {
+      try {
+        const raw = localStorage.getItem(K_ADDR);
+        const a = raw ? JSON.parse(raw) : null;
+        return a && typeof a === "object" ? a : null;
+      } catch (e) {
+        return null;
+      }
+    },
+    set: function (a) {
+      try {
+        localStorage.setItem(K_ADDR, JSON.stringify(a));
+      } catch (e) {}
+    },
+    del: function () {
+      try {
+        localStorage.removeItem(K_ADDR);
+      } catch (e) {}
+    },
+  };
+
+  /* endereço em uma linha: "Rua X, 123 — Bairro — Complemento" */
+  const addrLine = (a) => {
+    if (!a) return "";
+    const head = [a.rua, a.num].filter(Boolean).join(", ");
+    const tail = [a.bairro, a.comp].filter(Boolean).join(" — ");
+    return [head, tail].filter(Boolean).join(" — ");
+  };
+
+  /* hook da seção "Acompanhar entrega" — atualiza o mapa ao salvar */
+  let trackingRefresh = null;
+
+  /* ------------------------------------------------------------
      Pix — BR Code (EMV), QR Code e copia-e-cola
      ------------------------------------------------------------ */
   const PIX_KEY = String(B.pixKey || "").trim();
@@ -495,6 +532,37 @@
   }
 
   /* ------------------------------------------------------------
+     ACOMPANHAR ENTREGA — rota no mapa + links de navegação
+     ------------------------------------------------------------ */
+  function trackingSectionHTML() {
+    return (
+      '<section class="sec sec--track no-print" id="entrega"><div class="container">' +
+      '<header class="sec-head"><div class="sec-title">' +
+      '<span class="sec-eyebrow">Saiu para a entrega</span>' +
+      "<h2>Acompanhe sua entrega</h2></div>" +
+      '<p class="track-hint">Assim que a pizza sair, o entregador compartilha a localização <b>ao vivo</b> ' +
+      "pela conversa do WhatsApp — é só tocar no link. E aqui você já vê a rota até o seu endereço:</p></header>" +
+      '<div class="track-card">' +
+      '<div class="track-map">' +
+      '<iframe id="trackMap" src="about:blank" loading="lazy" ' +
+      'title="Mapa da rota de entrega"></iframe>' +
+      "</div>" +
+      '<div class="track-side">' +
+      '<div class="track-addr"><span>Nossa casa</span><b id="trackOrigin">—</b></div>' +
+      '<div class="track-addr is-hidden" id="trackDestWrap"><span>Suas entregas em</span><b id="trackDest">—</b></div>' +
+      '<ol class="track-steps">' +
+      "<li>Você informa o endereço no montador do pedido.</li>" +
+      "<li>A pizza sai do forno e o entregador manda a localização ao vivo no WhatsApp.</li>" +
+      "<li>Abra o link da conversa ou use os botões abaixo para ver a rota.</li>" +
+      "</ol>" +
+      '<div class="track-actions">' +
+      '<a class="btn btn-primary" id="trackGmaps" href="#" target="_blank" rel="noopener">Abrir no Google Maps</a>' +
+      '<a class="btn btn-ghost" id="trackWaze" href="#" target="_blank" rel="noopener">Abrir no Waze</a>' +
+      "</div></div></div></div></section>"
+    );
+  }
+
+  /* ------------------------------------------------------------
      Galeria de fotos
      ------------------------------------------------------------ */
   function galleryHTML() {
@@ -613,6 +681,28 @@
       "<p>O QR Code já sai com o valor do pedido. Também dá para copiar o código e colar no app do seu banco.</p>" +
       '<button type="button" class="btn btn-ghost" id="mPixCopy">Copiar código Pix</button>' +
       "</div></div></div>" +
+      /* entrega ou retirada — endereço salvo no aparelho */
+      '<div class="m-addr" id="mAddr">' +
+      '<div class="m-addr-head"><b>📍 Como quer receber?</b>' +
+      "<small>seu endereço fica salvo neste aparelho para os próximos pedidos</small></div>" +
+      '<div class="m-addr-opts" role="group" aria-label="Como quer receber o pedido">' +
+      '<button type="button" class="m-addr-opt is-on" data-mode="retirada" aria-pressed="true">🏃 Retirada</button>' +
+      '<button type="button" class="m-addr-opt" data-mode="entrega" aria-pressed="false">🛵 Entrega</button>' +
+      "</div>" +
+      '<div class="m-addr-form is-hidden" id="mAddrForm">' +
+      '<div class="m-addr-grid">' +
+      '<label class="m-af"><span>Rua</span>' +
+      '<input type="text" id="mAddrRua" placeholder="Rua, avenida…" autocomplete="off"></label>' +
+      '<label class="m-af"><span>Número</span>' +
+      '<input type="text" id="mAddrNum" placeholder="Nº" autocomplete="off"></label>' +
+      '<label class="m-af"><span>Bairro</span>' +
+      '<input type="text" id="mAddrBairro" placeholder="Bairro" autocomplete="off"></label>' +
+      '<label class="m-af"><span>Complemento</span>' +
+      '<input type="text" id="mAddrComp" placeholder="apto, bloco… (opcional)" autocomplete="off"></label>' +
+      "</div>" +
+      '<p class="m-addr-note">Salvo automaticamente neste aparelho — dá para alterar ou apagar quando quiser. ' +
+      '<button type="button" class="m-addr-clear" id="mAddrClear">Apagar endereço salvo</button></p>' +
+      "</div></div>" +
       '<input type="text" class="m-obs" id="mObs" placeholder="Observações (opcional): sem cebola…" maxlength="140">' +
       '<a class="btn btn-primary m-send" id="mSend" href="#" target="_blank" rel="noopener">Enviar pedido no WhatsApp</a>' +
       '<p class="m-note">Na mistura de sabores vale o preço do sabor mais caro. ' +
@@ -650,6 +740,7 @@
     { id: "calzones", label: "Calzones" },
     { id: "bebidas", label: "Bebidas" },
     { id: "cervejas", label: "Cervejas" },
+    { id: "entrega", label: "Entrega" },
   ];
 
   const PAGE_BREAKS = {
@@ -680,6 +771,11 @@
     if (footName) footName.textContent = B.name || "";
     const footYear = $("#footYear");
     if (footYear) footYear.textContent = B.year || "";
+    const footAddr = $("#footAddr");
+    if (footAddr) {
+      footAddr.textContent = B.address || "";
+      footAddr.hidden = !B.address;
+    }
 
     /* faixa rolante */
     const ribbonItems = [
@@ -735,6 +831,7 @@
       html += bebidasHTML();
       html += cervejasHTML();
       html += pixSectionHTML();
+      html += trackingSectionHTML();
       html += galleryHTML();
       sectionsEl.innerHTML = html;
     }
@@ -915,7 +1012,7 @@
       if (items.length) drinkGroups.push({ g: g, items: items });
     });
 
-    const state = { type: "pizza", step: 1, size: null, sel: [], borda: "", drinks: [], total: 0, ready: false };
+    const state = { type: "pizza", step: 1, size: null, sel: [], borda: "", drinks: [], total: 0, ready: false, mode: "retirada" };
     let warnTimer = null;
     let focusCat = null; /* categoria em destaque na lista (não limita a escolha) */
     let pixPayloadNow = "";
@@ -939,6 +1036,45 @@
     const backEl = $("#mBack", sec);
     const nextEl = $("#mNext", sec);
     const miniEl = $("#mMini", sec);
+
+    /* --- entrega ou retirada: endereço salvo no aparelho --- */
+    const modeBtns = $$(".m-addr-opt", sec);
+    const addrForm = $("#mAddrForm", sec);
+    const addrEls = {
+      rua: $("#mAddrRua", sec),
+      num: $("#mAddrNum", sec),
+      bairro: $("#mAddrBairro", sec),
+      comp: $("#mAddrComp", sec),
+    };
+    const addrClearEl = $("#mAddrClear", sec);
+
+    function readAddr() {
+      const a = {};
+      Object.keys(addrEls).forEach((k) => {
+        if (addrEls[k]) a[k] = (addrEls[k].value || "").trim();
+      });
+      return a;
+    }
+
+    const hasAddr = (a) => !!(a && a.rua && a.bairro);
+
+    function saveAddr() {
+      const a = readAddr();
+      if (hasAddr(a)) custAddr.set(a);
+      else custAddr.del();
+      if (trackingRefresh) trackingRefresh();
+    }
+
+    function setMode(mode) {
+      state.mode = mode === "entrega" ? "entrega" : "retirada";
+      modeBtns.forEach((b) => {
+        const on = b.dataset.mode === state.mode;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      if (addrForm) addrForm.classList.toggle("is-hidden", state.mode !== "entrega");
+      refreshLink();
+    }
 
     const sizeLabel = (k) => {
       const s = (MENU.sizes || []).find((x) => x.key === k);
@@ -1147,6 +1283,13 @@
 
       if (state.sel.length > 1) lines.push(["Regra da mistura", "Vale o sabor mais caro"]);
 
+      if (state.mode === "entrega") {
+        const a = readAddr();
+        lines.push(["Recebimento", "🛵 Entrega — " + (addrLine(a) || "informe o endereço abaixo")]);
+      } else {
+        lines.push(["Recebimento", "🏃 Retirada no balcão"]);
+      }
+
       state.total = total;
       state.ready = !!state.size && state.sel.length > 0;
 
@@ -1259,6 +1402,12 @@
       L.push("💰 Total: " + brl(state.total));
       const obs = (obsEl.value || "").trim();
       if (obs) L.push("📝 " + obs);
+
+      if (state.mode === "entrega") {
+        L.push("", "📍 Entrega para: " + (addrLine(readAddr()) || "—"));
+      } else {
+        L.push("", "🏃 Retirada no balcão" + (B.address ? " — " + B.address : ""));
+      }
 
       const mm = B.whatsappUrl.match(/wa\.me\/(\d+)/);
       return mm
@@ -1375,6 +1524,35 @@
       drawSummary();
     });
     obsEl.addEventListener("input", refreshLink);
+
+    /* entrega/retirada: escolha, endereço salvo e apagar */
+    modeBtns.forEach((b) => {
+      b.addEventListener("click", () => setMode(b.dataset.mode));
+    });
+    Object.keys(addrEls).forEach((k) => {
+      const el = addrEls[k];
+      if (el) {
+        el.addEventListener("input", () => {
+          saveAddr();
+          refreshLink();
+          drawSummary();
+        });
+      }
+    });
+    if (addrClearEl) {
+      addrClearEl.addEventListener("click", () => {
+        Object.keys(addrEls).forEach((k) => {
+          if (addrEls[k]) addrEls[k].value = "";
+        });
+        custAddr.del();
+        if (trackingRefresh) trackingRefresh();
+        drawSummary();
+        addrClearEl.textContent = "Endereço apagado ✓";
+        setTimeout(() => {
+          addrClearEl.textContent = "Apagar endereço salvo";
+        }, 1800);
+      });
+    }
     sendEl.addEventListener("click", (e) => {
       if (!state.ready) e.preventDefault();
     });
@@ -1459,6 +1637,13 @@
 
     /* --- início --- */
     if (bordaWrap) bordaWrap.hidden = false;
+    const savedAddr = custAddr.get();
+    if (savedAddr) {
+      Object.keys(addrEls).forEach((k) => {
+        if (addrEls[k]) addrEls[k].value = savedAddr[k] || "";
+      });
+    }
+    setMode(hasAddr(savedAddr) ? "entrega" : "retirada");
     updateMaxBadge();
     drawFlavors();
     drawDrinks();
@@ -1466,6 +1651,55 @@
     drawBorda();
     drawSummary();
     updateNav();
+  }
+
+  /* ------------------------------------------------------------
+     Acompanhar entrega — mapa da rota + botões de navegação
+     ------------------------------------------------------------ */
+  function setupTracking() {
+    const sec = $("#entrega");
+    if (!sec) return;
+    const map = $("#trackMap", sec);
+    const originEl = $("#trackOrigin", sec);
+    const destWrap = $("#trackDestWrap", sec);
+    const destEl = $("#trackDest", sec);
+    const gm = $("#trackGmaps", sec);
+    const wz = $("#trackWaze", sec);
+    const origin = String(B.address || "").trim();
+
+    function refresh() {
+      const dest = addrLine(custAddr.get());
+      if (originEl) originEl.textContent = origin || "Endereço da pizzaria não cadastrado";
+      if (destWrap) destWrap.classList.toggle("is-hidden", !dest);
+      if (destEl) destEl.textContent = dest;
+      if (map) {
+        map.title = dest ? "Rota da pizzaria até o seu endereço" : "Localização da pizzaria";
+        map.src =
+          origin && dest
+            ? "https://maps.google.com/maps?saddr=" +
+              encodeURIComponent(origin) +
+              "&daddr=" +
+              encodeURIComponent(dest) +
+              "&output=embed"
+            : "https://maps.google.com/maps?q=" + encodeURIComponent(origin || "Imperatriz, MA") + "&output=embed";
+      }
+      if (gm) {
+        gm.href = origin
+          ? "https://www.google.com/maps/dir/?api=1&origin=" +
+            encodeURIComponent(origin) +
+            (dest ? "&destination=" + encodeURIComponent(dest) : "")
+          : "#";
+      }
+      if (wz) {
+        wz.href =
+          dest || origin
+            ? "https://www.waze.com/ul?q=" + encodeURIComponent(dest || origin) + "&navigate=yes"
+            : "#";
+      }
+    }
+
+    refresh();
+    trackingRefresh = refresh;
   }
 
   /* ------------------------------------------------------------
@@ -1482,6 +1716,7 @@
   boot(render, "a renderização do cardápio");
   boot(setupSearch, "a busca");
   boot(setupBuilder, "o montador");
+  boot(setupTracking, "o acompanhamento de entrega");
   boot(setupSpy, "a navegação");
 
   /* impressão / PDF: garante que as fotos lazy já estejam carregadas */
